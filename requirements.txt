@@ -1,0 +1,25 @@
+fastapi==0.103.0
+requests==2.31.0
+google-api-python-client~=2.86.0
+google-cloud-aiplatform~=1.25.0
+cassandra-driver
+python-dotenv
+bugsnag
+langchain==0.0.281
+llama-index
+tiktoken #To tokenize long statements
+openpyxl # To read from excel sheet
+torch
+transformers
+scikit-learn
+tqdm
+pandas
+openai==0.27.8
+bs4
+urllib3
+requests
+validators==0.20.0
+cassio==0.1.1
+pytest
+uvicorn==0.23.2
+asgiref==3.7.2

@@ -1,0 +1,217 @@
+from dataclasses import dataclass
+import hashlib
+import hmac
+import os
+import re
+import json
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+import bugsnag
+import requests
+
+
+intercom_token = os.getenv("INTERCOM_TOKEN")
+intercom_client_secret = os.getenv("INTERCOM_CLIENT_SECRET")
+bot_intercom_id = os.getenv("BOT_INTERCOM_ID")
+
+# Pulled from https://developers.intercom.com/docs/references/rest-api/api.intercom.io/Conversations/conversation/
+DEFAULT_ALLOWED_DELIVERED_AS = [
+    "customer_initiated",
+    "admin_initiated",
+    "campaigns_initiated",
+    "operator_initiated",
+    "automated",
+]
+
+
+# Get an Intercom contact/lead using the Intercom UUID
+def get_intercom_contact_by_id(id):
+    headers = {"Authorization": f"Bearer {intercom_token}"}
+    res = requests.get(f"https://api.intercom.io/contacts/{id}", headers=headers)
+    return res.json()
+
+
+def add_comment_to_intercom_conversation(conversation_id, message):
+    headers = {"Authorization": f"Bearer {intercom_token}"}
+    res = requests.post(
+        f"https://api.intercom.io/conversations/{conversation_id}/reply",
+        headers=headers,
+        json={
+            "message_type": "note",
+            "type": "admin",
+            "admin_id": bot_intercom_id,
+            "body": message,
+        },
+    )
+    return res.json()
+
+
+# Reply to an existing Intercom conversation
+def send_intercom_message(conversation_id, message):
+    headers = {"Authorization": f"Bearer {intercom_token}"}
+    payload = {
+        "type": "admin",
+        "admin_id": bot_intercom_id,
+        "message_type": "comment",
+        "body": message,
+    }
+    res = requests.post(
+        f"https://api.intercom.io/conversations/{conversation_id}/reply",
+        json=payload,
+        headers=headers,
+    )
+    return res.json()
+
+
+# Validate the webhook actually comes from Intercom servers
+def validate_signature(header, body, secret):
+    # Get the signature from the payload
+    signature_header = header["X-Hub-Signature"]
+    sha_name, signature = signature_header.split("=")
+    if sha_name != "sha1":
+        print("ERROR: X-Hub-Signature in payload headers was not sha1=****")
+        return False
+    # Convert the dictionary to a JSON string
+    data_str = json.dumps(body)
+    data_bytes = data_str.encode("utf-8")
+
+    local_signature = hmac.new(
+        secret.encode("utf-8"), msg=data_bytes, digestmod=hashlib.sha1
+    )
+
+    # See if they match
+    return hmac.compare_digest(local_signature.hexdigest(), signature)
+
+
+@dataclass
+class ConversationInfo:
+    """A class representing all the required attributes from the chatbot to give a resposne"""
+
+    conversation_id: str
+    contact: Dict[str, Any]
+    user_question: str
+    is_datastax_user: bool
+    debug_mode: bool
+    source_url: str
+
+
+@dataclass
+class ResponseDecision:
+    """A class that determines the type of action to take based on the intercom request payload"""
+
+    should_return_early: bool
+    response_dict: Optional[Dict[str, Any]] = None
+    response_code: Optional[int] = None
+    conversation_info: Optional[ConversationInfo] = None
+
+    @classmethod
+    def from_request(
+        cls,
+        request_body: Dict[str, Any],
+        request_headers: Dict[str, Any],
+        allowed_delivered_as: Optional[List[str]] = None,
+    ) -> "ResponseDecision":
+        """Set properties based on each of the logical branches we can take"""
+        # NOTE: Empty list will be overriden
+        allowed_delivered_as = allowed_delivered_as or DEFAULT_ALLOWED_DELIVERED_AS
+
+        # Don't allow invalid signatures
+        if not validate_signature(
+            request_headers, request_body, intercom_client_secret
+        ):
+            return cls(
+                should_return_early=True,
+                response_dict={"ok": False, "message": "Invalid signature."},
+                response_code=401,
+            )
+        # Ignore repeat deliveries
+        if request_body["delivery_attempts"] > 1:
+            return cls(
+                should_return_early=True,
+                response_dict={"ok": True, "message": "Already reported."},
+                response_code=208,
+            )
+
+        data = request_body["data"]
+
+        debugging_payload = {"request": data}
+        bugsnag.notify(
+            Exception(debugging_payload)
+        )  # TODO: Simply for temporary debugging
+
+        # Handle intercom webhook tests
+        if data["item"]["type"] == "ping":
+            return cls(
+                should_return_early=True,
+                response_dict={"ok": True, "message": "Successful ping."},
+                response_code=200,
+            )
+        # Check for empty source
+        if data["item"]["source"] is None:
+            return cls(
+                should_return_early=True,
+                response_dict={"ok": False, "message": "Empty source."},
+                response_code=400,
+            )
+
+        # Find relevant part of intercom conversation for most recent message
+        conversation_parts = data["item"]["conversation_parts"]["conversation_parts"]
+        filtered_conversation_parts = [
+            part
+            for part in conversation_parts
+            if part.get("part_type") != "default_assignment"
+            and part.get("body")  # Filter for nulls and empty strings
+        ]
+
+        # Use conversation parts if available (means user responded in the convo),
+        # otherwise use the source (means user initiated a convo)
+        if len(filtered_conversation_parts) > 0:
+            conv_item = filtered_conversation_parts[0]
+        else:
+            conv_item = data["item"]["source"]
+
+        conversation_text = conv_item["body"]
+        author = conv_item["author"]
+
+        def callback(event):
+            event.user = {"email": author["email"]}
+
+        bugsnag.before_notify(callback)
+
+        # possible to be Contact, Admin, Campaign, Automated or Operator initiated
+        delivered_as = "not_customer_initiated"
+        if "delivered_as" in data["item"]["source"]:
+            delivered_as = data["item"]["source"]["delivered_as"]
+
+        conv_is_authorized = (
+            author["type"] == "user" and delivered_as in allowed_delivered_as
+        )
+
+        if not conv_is_authorized:
+            return cls(
+                should_return_early=True,
+                response_dict={"ok": False, "message": "Unauthorized user."},
+                response_code=403,
+            )
+
+        user_question = re.sub("<[^<]+?>", "", str(conversation_text))
+        # Reject request if empty question
+        if not user_question:
+            return cls(
+                should_return_early=True,
+                response_dict={"ok": False, "message": "Query provided was empty"},
+                response_code=400,
+            )
+
+        # If we passed every check above, should proceed with querying the LLM
+        return cls(
+            should_return_early=False,
+            conversation_info=ConversationInfo(
+                conversation_id=data["item"]["id"],
+                contact=get_intercom_contact_by_id(author["id"]),
+                user_question=user_question,
+                is_datastax_user="@datastax.com" in author["email"],
+                debug_mode="[DEBUG]" in user_question,
+                source_url=data["item"]["source"]["url"],
+            ),
+        )
