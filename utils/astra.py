@@ -6,13 +6,10 @@ from cassandra.cluster import Cluster, Session
 
 
 def get_persona(contact):
-    cassandra_expert = contact.get("custom_attributes", {}).get(
-        "currentlyRunningCassandraWorkload", False
-    )
+    """Given information about the user, choose a persona and associated prompt"""
+    # TODO: Only a single prompt here, extend as needed!
 
-    persona = "qualified" if cassandra_expert else "learner"
-
-    return persona
+    return "default"
 
 
 def init_astra_session_keyspace_tablename() -> Tuple[Session, str, str]:

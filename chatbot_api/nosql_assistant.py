@@ -13,7 +13,6 @@ from llama_index.embeddings import LangchainEmbedding
 
 sys.path.append("../")
 # The below line will be red in Pycharm, but it's fine
-from chatbot_api.url_utility import UrlUtility
 from chatbot_api.prompt_util import get_template
 from utils.slack import send_slack_message
 from utils.google import GECKO_EMB_DIM
@@ -108,12 +107,10 @@ class AssistantBison(NoSqlAssistant):
         top_k=40,
         max_tokens_response=256,
         k=4,
-        company = "DataStax and Cassandra",
-        custom_rules = ""
+        company="",
+        custom_rules="",
     ):
-        super().__init__(
-            session, embeddings, keyspace, table_name, k
-        )
+        super().__init__(session, embeddings, keyspace, table_name, k)
         # Create the model and chat session
         model = TextGenerationModel.from_pretrained("text-bison@001")
 
@@ -132,13 +129,17 @@ class AssistantBison(NoSqlAssistant):
         responses_from_vs, first_url = self.find_relevant_docs(
             query=user_input, return_first_url=True
         )
-        responses_from_vs = UrlUtility.replace_doc_urls(responses_from_vs)
-
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input
         if include_context:
-            context = get_template(persona, responses_from_vs, user_input, user_context,
-                                   self.company, self.custom_rules)
+            context = get_template(
+                persona,
+                responses_from_vs,
+                user_input,
+                user_context,
+                self.company,
+                self.custom_rules,
+            )
 
         send_slack_message("*PROMPT*")
         send_slack_message(context)
@@ -148,4 +149,4 @@ class AssistantBison(NoSqlAssistant):
         send_slack_message("*RESPONSE*")
         send_slack_message(bot_response)
 
-        return bot_response, responses_from_vs
+        return bot_response, responses_from_vs, context

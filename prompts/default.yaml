@@ -14,10 +14,9 @@ template: >
   Observe the following rules, in order of precedence, with the first rule being the most important:
 
   {custom_rules}
-  - Be concise but also consider the user's experience.
-  - Do not give any links or URLs to the user, even if they ask.
-  - You are giving an answer to someone who is VERY experienced with {company}, so keep that in mind.
-  - Be sure to format your response using markdown!
+  - Be concise when answering the user's question.
+  - Use simple terms and provide complete but succinct responses. 
+  - Format your response using markdown.
   
   #### USER QUESTION ####
   Answer the question below:

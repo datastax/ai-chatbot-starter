@@ -2,6 +2,7 @@ import json
 import os
 import bugsnag
 import logging
+import requests
 
 from asgiref.sync import async_to_sync
 from bugsnag.handlers import BugsnagHandler
@@ -26,7 +27,8 @@ load_dotenv(".env")
 
 # Grab the env variables loaded above
 mode = os.getenv("MODE", "Development")
-include_response = os.getenv("INCLUDE_RESPONSE", False)
+include_response = os.getenv("INCLUDE_RESPONSE", True)
+include_context = os.getenv("INCLUDE_CONTEXT", True)
 bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
 dscloud_app_version = os.getenv("DSCLOUD_APP_VERSION")
 
@@ -87,7 +89,7 @@ assistant = AssistantBison(
     max_tokens_response=1024,
     k=4,
     company=os.getenv("COMPANY"),
-    custom_rules=os.getenv("CUSTOM_RULES")
+    custom_rules=os.getenv("CUSTOM_RULES").split("\n"),
 )
 
 
@@ -174,7 +176,7 @@ def conversations(request: Request):
         ##
         # FINALLY, call the assistant
         ##
-        response, responses_from_vs = assistant.get_response(
+        response, responses_from_vs, context = assistant.get_response(
             conv_info.user_question, persona
         )
 
@@ -196,8 +198,10 @@ def conversations(request: Request):
         result = {"ok": True, "message": "Response submitted successfully."}
         if include_response:
             result["response"] = response
+        if include_context:
+            result["context"] = context
 
-        return JSONResponse(content=result, status_code=201)
+        return JSONResponse(content=result, status_code=requests.codes.created)
 
     except Exception as e:
         # Notify bugsnag if we hit an error

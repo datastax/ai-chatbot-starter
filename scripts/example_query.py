@@ -13,7 +13,7 @@ load_dotenv(".env")
 ###
 # Let's define the question right here
 ###
-CHATBOT_QUESTION = "What are 5 key advantages of your service?"
+CHATBOT_QUESTION = "How do i get started?"
 intercom_secret = os.getenv("INTERCOM_CLIENT_SECRET")
 
 
@@ -48,11 +48,14 @@ def call_nosql_assistant(chatbot_question=CHATBOT_QUESTION):
     r = requests.post("http://127.0.0.1:5010/chat", json=user_data, headers=headers)
 
     # Check if the request was successful
-    if r.status_code == 201:
-        # Display the image
-        return r.json()["response"]
+    if r.status_code == requests.codes.created:
+        return r.json()
     else:
         return f"Request failed with status code {r.status_code}: {r.text}"
 
 
-print(call_nosql_assistant())
+example_result = call_nosql_assistant()
+
+print(example_result["context"])
+print("\n====\n")
+print(example_result["response"])
