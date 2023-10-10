@@ -25,13 +25,12 @@ questions = [
 ]
 
 
-@pytest.mark.parametrize("persona", ["learner", "qualified"])
+@pytest.mark.parametrize("persona", ["default"])
 def test_prompts(persona):
     assistant = AssistantBison(
         session,
         keyspace=keyspace,
         table_name=table_name,
-        escalate_model_path=None,
         max_tokens_response=1024,
     )
 

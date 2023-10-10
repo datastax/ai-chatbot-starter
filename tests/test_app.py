@@ -46,7 +46,7 @@ def standard_request():
 def mock_assistant():
     """Mocks the AssistantBison object to prevent any real LLM queries being made"""
     with patch("app.assistant") as mock_bison:
-        mock_bison.get_response = MagicMock(return_value=("Mocked response", []))
+        mock_bison.get_response = MagicMock(return_value=("Mocked response", [], []))
         yield mock_bison
 
 
