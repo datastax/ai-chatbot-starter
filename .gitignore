@@ -1,6 +1,7 @@
 
 .DS_Store
 *.pyc
+
 .idea
 
 # Environments
@@ -11,4 +12,3 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-

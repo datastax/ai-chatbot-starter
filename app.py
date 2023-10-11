@@ -18,13 +18,11 @@ from integrations.intercom import (
     IntercomUserContext,
 )
 
-
 load_dotenv(".env")
 
 # Grab the env variables loaded above
 mode = os.getenv("MODE", "Development")
 bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
-dscloud_app_version = os.getenv("DSCLOUD_APP_VERSION")
 
 # Setup astra and GCP
 table_name = init_astra_get_table_name()
@@ -34,17 +32,15 @@ init_gcp()
 bugsnag.configure(
     api_key=bugsnag_api_key,
     project_root="/",
-    release_stage=mode,
-    app_version=dscloud_app_version,
+    release_stage=mode
 )
 
-# Setup the logging infrastructure
+# Set up the logging infrastructure
 logger = logging.getLogger("test.logger")
 handler = BugsnagHandler()
 # send only ERROR-level logs and above
 handler.setLevel(logging.ERROR)
 logger.addHandler(handler)
-
 
 # Define the FastAPI application
 app = FastAPI(
