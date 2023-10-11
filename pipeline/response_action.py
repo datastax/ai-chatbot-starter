@@ -16,6 +16,7 @@ class ResponseAction(metaclass=abc.ABCMeta):
 
     If response_dict is None, will iterate until we find a valid response_dict
     """
+
     response_dict: Optional[Dict[str, Any]]
     response_code: Optional[int]
 
@@ -27,10 +28,10 @@ class ResponseAction(metaclass=abc.ABCMeta):
     @classmethod
     @abc.abstractmethod
     def from_asst_response(
-            cls,
-            conv_info: Any,
-            bot_response: str,
-            responses_from_vs: str,
-            context: str,
+        cls,
+        conv_info: Any,
+        bot_response: str,
+        responses_from_vs: str,
+        context: str,
     ) -> "ResponseAction":
         pass

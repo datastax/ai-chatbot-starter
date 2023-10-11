@@ -14,6 +14,7 @@ class UserContext(metaclass=abc.ABCMeta):
     It should handle retrieving the necessary fields, as well as
     formatting them appropriately into a string.
     """
+
     user_question: str
     persona: str
     context_str: str

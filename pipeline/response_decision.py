@@ -14,6 +14,7 @@ class ResponseDecision(metaclass=abc.ABCMeta):
     to engage the chatbot to answer, or return early based on
     conditional logic.
     """
+
     should_return_early: bool
     response_dict: Optional[Dict[str, Any]] = None
     response_code: Optional[int] = None

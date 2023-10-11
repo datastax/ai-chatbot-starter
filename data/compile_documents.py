@@ -43,6 +43,7 @@ service_context = ServiceContext.from_defaults(
     ),
 )
 
+
 # Perform embedding and add to vectorstore
 def add_documents(folder_path):
     documents = convert_scraped_files_to_documents(folder_path)
@@ -53,8 +54,12 @@ def add_documents(folder_path):
         show_progress=True,
     )
 
+
 def list_folders(directory):
-    return [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+    return [
+        d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))
+    ]
+
 
 for folder in list_folders("."):
     add_documents(folder)

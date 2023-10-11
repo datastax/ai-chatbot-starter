@@ -40,7 +40,9 @@ def get_intercom_contact_by_id(_id: Union[int, str]) -> Dict[str, Any]:
     return res.json()
 
 
-def add_comment_to_intercom_conversation(conversation_id: str, message: str) -> Dict[str, Any]:
+def add_comment_to_intercom_conversation(
+    conversation_id: str, message: str
+) -> Dict[str, Any]:
     headers = {"Authorization": f"Bearer {intercom_token}"}
     res = requests.post(
         f"https://api.intercom.io/conversations/{conversation_id}/reply",
@@ -73,7 +75,9 @@ def send_intercom_message(conversation_id: str, message: str) -> Dict[str, Any]:
 
 
 # Validate the webhook actually comes from Intercom servers
-def validate_signature(header: Mapping[str, str], body: Mapping[str, Any], secret: str) -> bool:
+def validate_signature(
+    header: Mapping[str, str], body: Mapping[str, Any], secret: str
+) -> bool:
     # Get the signature from the payload
     signature_header = header["X-Hub-Signature"]
     sha_name, signature = signature_header.split("=")
@@ -95,6 +99,7 @@ def validate_signature(header: Mapping[str, str], body: Mapping[str, Any], secre
 @dataclass
 class IntercomConversationInfo:
     """A class representing all the required attributes from the chatbot to give a response"""
+
     conversation_id: str
     contact: Dict[str, Any]
     user_question: str
@@ -106,6 +111,7 @@ class IntercomConversationInfo:
 @dataclass
 class IntercomResponseDecision(ResponseDecision):
     """A class that determines the type of action to take based on the intercom request payload"""
+
     conversation_info: Optional[IntercomConversationInfo] = None
 
     @classmethod
@@ -224,7 +230,9 @@ class IntercomResponseDecision(ResponseDecision):
 @dataclass
 class IntercomUserContext(UserContext):
     @classmethod
-    def from_conversation_info(cls, conv_info: IntercomConversationInfo) -> "IntercomUserContext":
+    def from_conversation_info(
+        cls, conv_info: IntercomConversationInfo
+    ) -> "IntercomUserContext":
         # Grab needed parameters
         mode = os.getenv("MODE", "Development")
         conversation_id = conv_info.conversation_id  # Astra User Id
@@ -259,9 +267,9 @@ class IntercomUserContext(UserContext):
         # Build user context information present
         context_str = "No user information present."
         if (
-                conv_info.contact is not None
-                and "name" in conv_info.contact
-                and "email" in conv_info.contact
+            conv_info.contact is not None
+            and "name" in conv_info.contact
+            and "email" in conv_info.contact
         ):
             context_str = (
                 f"Here is information on the user:\n"
@@ -295,7 +303,7 @@ class IntercomResponseAction(ResponseAction):
         conv_info: IntercomConversationInfo,
         bot_response: str,
         responses_from_vs: str,
-        context: str
+        context: str,
     ) -> "IntercomResponseAction":
         # Read necessary env vars
         include_response = os.getenv("INCLUDE_RESPONSE", True)
@@ -312,7 +320,8 @@ class IntercomResponseAction(ResponseAction):
             send_intercom_message(conv_info.conversation_id, bot_response)
         else:
             add_comment_to_intercom_conversation(
-                conv_info.conversation_id, f"NoSQL Assistant Suggested Response: {bot_response}"
+                conv_info.conversation_id,
+                f"NoSQL Assistant Suggested Response: {bot_response}",
             )
 
         # Return the result with the full response if desired

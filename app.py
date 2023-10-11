@@ -29,11 +29,7 @@ table_name = init_astra_get_table_name()
 init_gcp()
 
 # Configure bugsnag
-bugsnag.configure(
-    api_key=bugsnag_api_key,
-    project_root="/",
-    release_stage=mode
-)
+bugsnag.configure(api_key=bugsnag_api_key, project_root="/", release_stage=mode)
 
 # Set up the logging infrastructure
 logger = logging.getLogger("test.logger")
@@ -96,7 +92,9 @@ def conversations(request: Request):
         request_body = json.loads(data_str)
 
         # Based on the body, create a ResponseDecision object
-        response_decision = IntercomResponseDecision.from_request(request_body, request.headers)
+        response_decision = IntercomResponseDecision.from_request(
+            request_body, request.headers
+        )
 
         # Exit early if we don't want to continue on to LLM for response
         if response_decision.should_return_early:

@@ -19,7 +19,7 @@ def init_astra() -> None:
     cassio.init(
         token=os.getenv("ASTRA_DB_TOKEN"),
         database_id=os.getenv("ASTRA_DB_DATABASE_ID"),
-        keyspace = os.getenv("ASTRA_DB_KEYSPACE", DEFAULT_KEYSPACE),
+        keyspace=os.getenv("ASTRA_DB_KEYSPACE", DEFAULT_KEYSPACE),
     )
 
 
