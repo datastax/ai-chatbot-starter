@@ -11,8 +11,8 @@ from llama_index.vector_stores import CassandraVectorStore
 
 sys.path.append("../")
 from chatbot_api.compile_docs import convert_scraped_files_to_documents
-from utils.astra import init_astra_session_keyspace_tablename
-from utils.google import init_gcp, GECKO_EMB_DIM
+from integrations.astra import init_astra_session_keyspace_tablename
+from integrations.google import init_gcp, GECKO_EMB_DIM
 
 dotenv_path = "../.env"
 load_dotenv(dotenv_path)
@@ -43,6 +43,7 @@ service_context = ServiceContext.from_defaults(
     ),
 )
 
+
 # Perform embedding and add to vectorstore
 def add_documents(folder_path):
     documents = convert_scraped_files_to_documents(folder_path)
@@ -53,8 +54,12 @@ def add_documents(folder_path):
         show_progress=True,
     )
 
+
 def list_folders(directory):
-    return [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+    return [
+        d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))
+    ]
+
 
 for folder in list_folders("."):
     add_documents(folder)

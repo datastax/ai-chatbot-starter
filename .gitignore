@@ -1,4 +1,18 @@
 
 .DS_Store
 *.pyc
-.idea/
+
+.idea
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+*pytest_output.txt
+

@@ -1,5 +1,7 @@
-import requests
 import os
+from typing import Any, List
+
+import requests
 
 orchestrator_admin_token = os.getenv("ORCHESTRATOR_ADMIN_TOKEN")
 orchestrator_endpoint = os.getenv("ORCHESTRATOR_ENDPOINT")
@@ -7,7 +9,7 @@ mode = os.getenv("MODE", "Development")
 
 
 # Get all databases using an Astra organization Id
-def get_databases(org_id):
+def get_databases(org_id: str) -> List[Any]:
     try:
         headers = {"Authorization": f"Bearer {orchestrator_admin_token}"}
         res = requests.get(

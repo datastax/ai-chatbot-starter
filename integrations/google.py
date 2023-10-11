@@ -7,7 +7,7 @@ from google.oauth2 import service_account
 GECKO_EMB_DIM = 768
 
 
-def init_gcp():
+def init_gcp() -> None:
     """Initialize GCP Auth based on environment variables"""
     # Google Auth + Vertex instance
     project_id = os.environ.get("GOOGLE_PROJECT_ID")

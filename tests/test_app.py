@@ -3,19 +3,11 @@ import os
 import logging
 from unittest.mock import MagicMock, patch
 
-from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 import hmac
 import hashlib
 from pydantic.utils import deep_update
 import pytest
-
-from app import app
-
-client = TestClient(app)
-
-load_dotenv("../.env")
-intercom_secret = os.getenv("INTERCOM_CLIENT_SECRET")
 
 
 def get_headers(body):
@@ -23,6 +15,8 @@ def get_headers(body):
 
     NOTE: Keys in `body` must be specified (recursively) in alphabetical order
     """
+    intercom_secret = os.getenv("INTERCOM_CLIENT_SECRET")
+
     digest = hmac.new(
         intercom_secret.encode("utf-8"),
         msg=json.dumps(body).encode("utf-8"),
@@ -35,6 +29,13 @@ def load_test_request(filename):
     with open(filename, "r") as f:
         request_data = json.load(f)
     return request_data
+
+
+@pytest.fixture(scope="module")
+def client(init_env):
+    from app import app
+
+    yield TestClient(app)
 
 
 @pytest.fixture(scope="function")
@@ -50,14 +51,14 @@ def mock_assistant():
         yield mock_bison
 
 
-def test_get_root_route():
+def test_get_root_route(client):
     response = client.get("/chat")
     assert response.status_code == 200
     assert response.json()["ok"] == True
     assert response.json()["message"] == "App is running"
 
 
-def test_standard_case(standard_request):
+def test_standard_case(standard_request, client):
     headers = get_headers(standard_request)
     response = client.post("/chat", json=standard_request, headers=headers)
     assert response.status_code == 201
@@ -65,7 +66,7 @@ def test_standard_case(standard_request):
     assert response.json()["message"] == "Response submitted successfully."
 
 
-def test_broad_case(standard_request):
+def test_broad_case(standard_request, client):
     # Process each question sequentially in the test questions file
     with open("test_questions.txt", "r") as file:
         lines = [line.strip() for line in file]
@@ -96,10 +97,12 @@ def test_broad_case(standard_request):
         assert response.json()["message"] == "Response submitted successfully."
 
 
-def test_invalid_signature(standard_request):
+def test_invalid_signature(standard_request, client):
     """
     This test is used to validate the signature.The request should be coming from the intercom.
     """
+    intercom_secret = os.getenv("INTERCOM_CLIENT_SECRET")
+
     digest = hmac.new(
         intercom_secret.encode("utf-8"),
         msg=json.dumps(standard_request).encode("utf-8"),
@@ -113,7 +116,7 @@ def test_invalid_signature(standard_request):
     assert response.json()["message"] == "Invalid signature."
 
 
-def test_delivery_attempts(standard_request):
+def test_delivery_attempts(standard_request, client):
     """
     Test passes if the delivery attempts are more than 1
     """
@@ -126,7 +129,7 @@ def test_delivery_attempts(standard_request):
     assert response.json()["message"] == "Already reported."
 
 
-def test_ping(standard_request):
+def test_ping(standard_request, client):
     """
     Test if the request is for ping
     """
@@ -138,7 +141,7 @@ def test_ping(standard_request):
     assert response.json()["message"] == "Successful ping."
 
 
-def test_source(standard_request):
+def test_source(standard_request, client):
     """
     Test if the source is None.
     None passes the test
@@ -151,7 +154,7 @@ def test_source(standard_request):
     assert response.json()["message"] == "Empty source."
 
 
-def test_datastax_user(standard_request):
+def test_datastax_user(standard_request, client):
     """
     Test to check if the user is a DataStax User
     """
@@ -165,7 +168,7 @@ def test_datastax_user(standard_request):
     assert response.json()["message"] == "Unauthorized user."
 
 
-def test_null_user_question(standard_request):
+def test_null_user_question(standard_request, client):
     # Resolving bug where first msg of most conversations was converted to null
     standard_request["data"]["item"]["conversation_parts"] = {
         "conversation_parts": [
@@ -262,7 +265,11 @@ def test_null_user_question(standard_request):
     ],
 )
 def test_responds_in_appropriate_settings(
-    should_respond, update_dict, standard_request, mock_assistant
+    should_respond,
+    update_dict,
+    standard_request,
+    mock_assistant,
+    client,
 ):
     standard_request = deep_update(standard_request, update_dict)
     headers = get_headers(standard_request)

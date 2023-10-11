@@ -1,15 +1,10 @@
 import sys
-
+import os
 import pytest
 
 sys.path.append("../")
 
 from chatbot_api.nosql_assistant import AssistantBison
-from utils.astra import init_astra_session_keyspace_tablename
-from utils.google import init_gcp
-
-session, keyspace, table_name = init_astra_session_keyspace_tablename()
-init_gcp()
 
 mock_context = (
     f"Here is information on the user:\n"
@@ -26,12 +21,13 @@ questions = [
 
 
 @pytest.mark.parametrize("persona", ["default"])
-def test_prompts(persona):
+def test_prompts(persona, astra_table_name, gcp_conn):
     assistant = AssistantBison(
-        session,
-        keyspace=keyspace,
-        table_name=table_name,
+        table_name=astra_table_name,
         max_tokens_response=1024,
+        k=4,
+        company=os.getenv("COMPANY"),
+        custom_rules=os.getenv("CUSTOM_RULES").split("\n"),
     )
 
     print(f"\n{persona} Questions:")
