@@ -1,49 +1,37 @@
-from langchain.embeddings import VertexAIEmbeddings
-
+import os
 from abc import ABC, abstractmethod
-
-from os.path import join, dirname
-from dotenv import load_dotenv
 import sys
-from vertexai.preview.language_models import TextGenerationModel
+from typing import List, Optional, Tuple
 
+from langchain.embeddings.base import Embeddings
+from langchain.embeddings import VertexAIEmbeddings
 from llama_index import VectorStoreIndex, ServiceContext
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
+from vertexai.preview.language_models import TextGenerationModel
 
-sys.path.append("../")
-# The below line will be red in Pycharm, but it's fine
+sys.path.append(os.getcwd())
 from chatbot_api.prompt_util import get_template
-from utils.slack import send_slack_message
-from utils.google import GECKO_EMB_DIM
-
-# IMPORTANT: MUST SET PROJECT ID HERE!
-dotenv_path = join(dirname(__file__), "../.env")
-load_dotenv(dotenv_path)
+from integrations.astra import DEFAULT_TABLE_NAME
+from integrations.google import GECKO_EMB_DIM
 
 
 class NoSqlAssistant(ABC):
     def __init__(
         self,
-        session,
-        embeddings=None,
-        keyspace="chat",
-        table_name="data",
-        k=4,
+        embeddings: Optional[Embeddings] = None,
+        table_name: str = DEFAULT_TABLE_NAME,
+        k: int = 4,
     ):
-        if embeddings is None:
-            embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@latest")
-
-        # Set the session, embeddings, keyspace, and table name from the args/kwargs
-        self.session = session
+        # Set the embeddings, keyspace, and table name from the args/kwargs
         self.embeddings = embeddings
-        self.keyspace = keyspace
         self.table_name = table_name
 
         # Initialize the vector store, which contains the vector embeddings of the data
+        # NOTE: With cassio init, session & keyspace are inferred from global default
         self.vectorstore = CassandraVectorStore(
-            session=session,
-            keyspace=keyspace,
+            session=None,
+            keyspace=None,
             table=table_name,
             embedding_dimension=GECKO_EMB_DIM,
         )
@@ -61,7 +49,7 @@ class NoSqlAssistant(ABC):
         self.query_engine = self.index.as_query_engine(similarity_top_k=k)
 
     # Get a response from the vector search, aka the relevant data
-    def find_relevant_docs(self, query, return_first_url=False):
+    def find_relevant_docs(self, query: str) -> Tuple[str, str]:
         response = self.query_engine.query(
             query
         )  # TODO: Retriever (index.as_retriever (returns list of source nodes instead of response object))
@@ -83,34 +71,41 @@ class NoSqlAssistant(ABC):
             raw_text
         )  # Prevent any one document from being too long
 
-        if return_first_url:
-            return vector_search_results, first_url
-        return vector_search_results
+        return vector_search_results, first_url
 
     # Get a response from the chatbot, excluding the responses from the vector search
     @abstractmethod
-    def get_response(self, user_input, n_results=5, persona="qualified") -> str:
-        answer, _ = self.get_response(user_input, persona, n_results=n_results)
-        return answer
+    def get_response(
+        self,
+        user_input: str,
+        persona: str,
+        user_context: str = "",
+        include_context: bool = True,
+    ) -> Tuple[str, str, str]:
+        """
+        :returns: Should return a tuple of
+                  (bot response, vector store responses string, user context)
+        """
 
 
 class AssistantBison(NoSqlAssistant):
     # Instantiate the class using the default bison model
     def __init__(
         self,
-        session,
-        embeddings=None,
-        keyspace="chat",
-        table_name="data",
-        temp=0.2,
-        top_p=0.8,
-        top_k=40,
-        max_tokens_response=256,
-        k=4,
-        company="",
-        custom_rules="",
+        embeddings: Optional[Embeddings] = None,
+        table_name: str = DEFAULT_TABLE_NAME,
+        temp: float = 0.2,
+        top_p: float = 0.8,
+        top_k: int = 40,
+        max_tokens_response: int = 256,
+        k: int = 4,
+        company: str = "",
+        custom_rules: Optional[List[str]] = None,
     ):
-        super().__init__(session, embeddings, keyspace, table_name, k)
+        if embeddings is None:
+            embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@latest")
+
+        super().__init__(embeddings, table_name, k)
         # Create the model and chat session
         model = TextGenerationModel.from_pretrained("text-bison@001")
 
@@ -123,12 +118,16 @@ class AssistantBison(NoSqlAssistant):
         }
         self.model = model
         self.company = company
-        self.custom_rules = custom_rules
+        self.custom_rules = custom_rules or []
 
-    def get_response(self, user_input, persona, user_context="", include_context=True):
-        responses_from_vs, first_url = self.find_relevant_docs(
-            query=user_input, return_first_url=True
-        )
+    def get_response(
+        self,
+        user_input: str,
+        persona: str,
+        user_context: str = "",
+        include_context: bool = True,
+    ) -> Tuple[str, str, str]:
+        responses_from_vs, first_url = self.find_relevant_docs(query=user_input)
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input
         if include_context:
@@ -141,12 +140,6 @@ class AssistantBison(NoSqlAssistant):
                 self.custom_rules,
             )
 
-        send_slack_message("*PROMPT*")
-        send_slack_message(context)
-
         bot_response = self.model.predict(context, **self.parameters).text
-
-        send_slack_message("*RESPONSE*")
-        send_slack_message(bot_response)
 
         return bot_response, responses_from_vs, context

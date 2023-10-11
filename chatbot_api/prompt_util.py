@@ -1,11 +1,17 @@
 import os
+from typing import List
 
 from langchain.prompts import load_prompt
 
 
 def get_template(
-    persona, vector_search_results, user_question, user_context, company, custom_rules
-):
+    persona: str,
+    vector_search_results: str,
+    user_question: str,
+    user_context: str,
+    company: str,
+    custom_rules: List[str],
+) -> str:
     persona_path = f"prompts/{persona}.yaml"
     if not os.path.exists(persona_path):
         persona_path = f"../prompts/{persona}.yaml"

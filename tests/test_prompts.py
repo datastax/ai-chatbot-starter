@@ -5,8 +5,8 @@ import pytest
 sys.path.append("../")
 
 from chatbot_api.nosql_assistant import AssistantBison
-from utils.astra import init_astra_session_keyspace_tablename
-from utils.google import init_gcp
+from integrations.astra import init_astra_session_keyspace_tablename
+from integrations.google import init_gcp
 
 session, keyspace, table_name = init_astra_session_keyspace_tablename()
 init_gcp()
