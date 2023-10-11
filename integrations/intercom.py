@@ -7,17 +7,12 @@ import json
 from typing import Any, Dict, List, Optional, Mapping, Union
 
 import bugsnag
-from dotenv import load_dotenv
 import requests
 from urllib.parse import urlparse
 
 from integrations.astra import get_persona
 from integrations.orchestrator import get_databases
 from pipeline import ResponseAction, ResponseDecision, UserContext
-
-
-load_dotenv(".env")
-
 
 intercom_token = os.getenv("INTERCOM_TOKEN")
 intercom_client_secret = os.getenv("INTERCOM_CLIENT_SECRET")
