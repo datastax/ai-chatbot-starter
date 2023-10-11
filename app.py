@@ -22,7 +22,6 @@ from utils.intercom import (
 )
 from utils.orchestrator import get_databases
 
-
 load_dotenv(".env")
 
 # Grab the env variables loaded above
@@ -30,7 +29,6 @@ mode = os.getenv("MODE", "Development")
 include_response = os.getenv("INCLUDE_RESPONSE", True)
 include_context = os.getenv("INCLUDE_CONTEXT", True)
 bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
-dscloud_app_version = os.getenv("DSCLOUD_APP_VERSION")
 
 # Setup astra and GCP
 session, keyspace, table_name = init_astra_session_keyspace_tablename()
@@ -40,17 +38,15 @@ init_gcp()
 bugsnag.configure(
     api_key=bugsnag_api_key,
     project_root="/",
-    release_stage=mode,
-    app_version=dscloud_app_version,
+    release_stage=mode
 )
 
-# Setup the logging infrastructure
+# Set up the logging infrastructure
 logger = logging.getLogger("test.logger")
 handler = BugsnagHandler()
 # send only ERROR-level logs and above
 handler.setLevel(logging.ERROR)
 logger.addHandler(handler)
-
 
 # Define the FastAPI application
 app = FastAPI(
@@ -151,15 +147,16 @@ def conversations(request: Request):
         # Build user context information present
         user_context = "No user information present."
         if (
-            conv_info.contact is not None
-            and "name" in conv_info.contact
-            and "email" in conv_info.contact
+                conv_info.contact is not None
+                and "name" in conv_info.contact
+                and "email" in conv_info.contact
         ):
             user_context = (
                 f"Here is information on the user:\n"
                 f"- User Name: {conv_info.contact['name']}\n"
                 f"- User Email: {conv_info.contact['email']}\n"
-                f"- User Primary Programming Language (also known as favorite programming language and preferred programming language): {programming_language}\n"
+                f"- User Primary Programming Language (also known as favorite programming language and preferred "
+                f"programming language): {programming_language}\n"
                 f"{db_text}"
             )
 
@@ -186,7 +183,7 @@ def conversations(request: Request):
                 conversation_id, "\nDocuments retrieved: " + responses_from_vs
             )
 
-        # Either comment or message based on whether its a datastax user
+        # Either comment or message based on whether it's a datastax user
         if conv_info.is_datastax_user:
             send_intercom_message(conversation_id, response)
         else:

@@ -2,9 +2,9 @@ fastapi==0.103.0
 requests==2.31.0
 google-api-python-client~=2.86.0
 google-cloud-aiplatform~=1.25.0
-cassandra-driver
-python-dotenv
-bugsnag
+cassandra-driver~=3.28.0
+python-dotenv~=1.0.0
+bugsnag~=4.6.0
 langchain==0.0.281
 llama-index
 tiktoken #To tokenize long statements
@@ -12,14 +12,18 @@ openpyxl # To read from excel sheet
 torch
 transformers
 scikit-learn
-tqdm
+tqdm~=4.66.1
 pandas
 openai==0.27.8
-bs4
+bs4~=0.0.1
 urllib3
 requests
 validators==0.20.0
 cassio==0.1.1
-pytest
+pytest~=7.4.2
 uvicorn==0.23.2
 asgiref==3.7.2
+
+pydantic~=2.4.2
+starlette~=0.27.0
+beautifulsoup4~=4.12.2
