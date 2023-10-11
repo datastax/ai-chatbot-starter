@@ -5,11 +5,16 @@ import logging
 
 from asgiref.sync import async_to_sync
 from bugsnag.handlers import BugsnagHandler
-from chatbot_api.nosql_assistant import AssistantBison
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+# NOTE: Load dotenv before importing any code from other files for globals
+# TODO: Probably make this unnecessary with better abstractions
+load_dotenv(".env")
+
+from chatbot_api.nosql_assistant import AssistantBison
 from integrations.astra import init_astra_get_table_name
 from integrations.google import init_gcp
 from integrations.intercom import (
@@ -17,8 +22,6 @@ from integrations.intercom import (
     IntercomResponseDecision,
     IntercomUserContext,
 )
-
-load_dotenv(".env")
 
 # Grab the env variables loaded above
 mode = os.getenv("MODE", "Development")
