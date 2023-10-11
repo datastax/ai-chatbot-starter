@@ -4,6 +4,12 @@ import os
 from google.cloud import aiplatform
 from google.oauth2 import service_account
 
+from dotenv import load_dotenv
+
+
+load_dotenv("../.env")
+
+
 GECKO_EMB_DIM = 768
 
 

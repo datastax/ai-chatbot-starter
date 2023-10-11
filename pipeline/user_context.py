@@ -2,7 +2,7 @@ import abc
 from dataclasses import dataclass
 from typing import Any, Dict, Type
 
-from utils import register
+from .utils import register
 
 user_context_registry: Dict[str, Type["UserContext"]] = {}
 

@@ -2,7 +2,7 @@ import abc
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Type
 
-from utils import register
+from .utils import register
 
 response_decision_registry: Dict[str, Type["ResponseDecision"]] = {}
 

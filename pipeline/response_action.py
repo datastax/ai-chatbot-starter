@@ -2,7 +2,7 @@ import abc
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type
 
-from utils import register
+from .utils import register
 
 response_action_registry: Dict[str, Type["ResponseAction"]] = {}
 
