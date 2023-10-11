@@ -16,3 +16,6 @@ venv.bak/
 # Testing
 *pytest_output.txt
 
+# Data
+data/docs
+
