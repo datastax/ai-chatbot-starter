@@ -11,8 +11,8 @@ from llama_index.vector_stores import CassandraVectorStore
 
 sys.path.append("../")
 from chatbot_api.compile_docs import convert_scraped_files_to_documents
-from utils.astra import init_astra_session_keyspace_tablename
-from utils.google import init_gcp, GECKO_EMB_DIM
+from integrations.astra import init_astra_session_keyspace_tablename
+from integrations.google import init_gcp, GECKO_EMB_DIM
 
 dotenv_path = "../.env"
 load_dotenv(dotenv_path)
