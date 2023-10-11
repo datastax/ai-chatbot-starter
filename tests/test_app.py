@@ -34,6 +34,7 @@ def load_test_request(filename):
 @pytest.fixture(scope="module")
 def client(init_env):
     from app import app
+
     yield TestClient(app)
 
 
@@ -264,7 +265,11 @@ def test_null_user_question(standard_request, client):
     ],
 )
 def test_responds_in_appropriate_settings(
-    should_respond, update_dict, standard_request, mock_assistant, client,
+    should_respond,
+    update_dict,
+    standard_request,
+    mock_assistant,
+    client,
 ):
     standard_request = deep_update(standard_request, update_dict)
     headers = get_headers(standard_request)

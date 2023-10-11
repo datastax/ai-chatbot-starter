@@ -7,7 +7,6 @@ from integrations.google import init_gcp
 
 @pytest.fixture(scope="module", autouse=True)
 def init_env():
-    import pdb; pdb.set_trace()
     load_dotenv("../.env")
 
 
