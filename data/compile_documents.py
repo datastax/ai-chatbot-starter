@@ -3,7 +3,7 @@ import sys
 import os
 
 from dotenv import load_dotenv
-from langchain.embeddings import VertexAIEmbeddings
+from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from llama_index import VectorStoreIndex, ServiceContext, StorageContext
 from llama_index.embeddings import LangchainEmbedding
 from llama_index.node_parser import SimpleNodeParser
@@ -18,12 +18,16 @@ dotenv_path = "../.env"
 load_dotenv(dotenv_path)
 
 session, keyspace, table_name = init_astra_session_keyspace_tablename()
-init_gcp()
 
-# ENV setup
-embedding_model = LangchainEmbedding(
-    VertexAIEmbeddings(model_name="textembedding-gecko@latest")
-)
+# Provider for LLM
+llm_provider = os.getenv("LLM_PROVIDER", "openai")
+if llm_provider == "openai":
+    embed_model = OpenAIEmbeddings()
+else:
+    init_gcp()
+    embedding_model = LangchainEmbedding(
+        VertexAIEmbeddings(model_name="textembedding-gecko@latest")
+    )
 
 vectorstore = CassandraVectorStore(
     session=session,
