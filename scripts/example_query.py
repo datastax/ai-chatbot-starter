@@ -36,7 +36,7 @@ with open(user_data_file, "r") as f:
     user_data = json.load(f)
 
 
-def call_nosql_assistant(chatbot_question=CHATBOT_QUESTION):
+def call_assistant(chatbot_question=CHATBOT_QUESTION):
     # Set the request appropriately
     user_data["data"]["item"]["conversation_parts"]["conversation_parts"][0][
         "body"
@@ -54,7 +54,7 @@ def call_nosql_assistant(chatbot_question=CHATBOT_QUESTION):
         return f"Request failed with status code {r.status_code}: {r.text}"
 
 
-example_result = call_nosql_assistant()
+example_result = call_assistant()
 
 print(example_result["context"])
 print("\n====\n")

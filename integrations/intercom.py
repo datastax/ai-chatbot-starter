@@ -316,7 +316,7 @@ class IntercomResponseAction(ResponseAction):
         else:
             add_comment_to_intercom_conversation(
                 conv_info.conversation_id,
-                f"NoSQL Assistant Suggested Response: {bot_response}",
+                f"Assistant Suggested Response: {bot_response}",
             )
 
         # Return the result with the full response if desired
