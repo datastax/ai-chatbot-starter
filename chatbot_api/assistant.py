@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
-from llama_index import OpenAIEmbedding, VectorStoreIndex, ServiceContext
+from llama_index import VectorStoreIndex, ServiceContext
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
 from vertexai.preview.language_models import TextGenerationModel
