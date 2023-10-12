@@ -111,9 +111,7 @@ def conversations(request: Request):
             response_decision.conversation_info
         )
 
-        ##
-        # FINALLY, call the assistant
-        ##
+        # Finally, call the assistant to retrieve a response
         bot_response, responses_from_vs, context = assistant.get_response(
             user_input=user_context.user_question,
             persona=user_context.persona,
@@ -128,6 +126,7 @@ def conversations(request: Request):
             context=context,
         )
 
+        # Return the API response with the appropriate response code
         return JSONResponse(
             content=response_action.response_dict,
             status_code=response_action.response_code,
