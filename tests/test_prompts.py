@@ -4,7 +4,7 @@ import pytest
 
 sys.path.append("../")
 
-from chatbot_api.nosql_assistant import AssistantBison
+from chatbot_api.assistant import AssistantBison
 
 mock_context = (
     f"Here is information on the user:\n"
