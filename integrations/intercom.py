@@ -1,18 +1,17 @@
-from dataclasses import dataclass
 import hashlib
 import hmac
 import os
 import re
 import json
-from typing import Any, Dict, List, Optional, Mapping, Union
-
 import bugsnag
 import requests
-from urllib.parse import urlparse
 
+from dataclasses import dataclass
 from integrations.astra import get_persona
 from pipeline import ResponseAction, ResponseDecision, UserContext
+from typing import Any, Dict, List, Optional, Mapping, Union
 
+# Get intercom env variables
 intercom_token = os.getenv("INTERCOM_TOKEN")
 intercom_client_secret = os.getenv("INTERCOM_CLIENT_SECRET")
 bot_intercom_id = os.getenv("BOT_INTERCOM_ID")
