@@ -205,7 +205,7 @@ class IntercomResponseDecision(ResponseDecision):
                 response_dict={"ok": False, "message": "Query provided was empty"},
                 response_code=400,
             )
-        
+
         company_url = os.getenv("COMPANY_URL", "")
 
         # If we passed every check above, should proceed with querying the LLM
