@@ -1,19 +1,17 @@
-from dataclasses import dataclass
 import hashlib
 import hmac
 import os
 import re
 import json
-from typing import Any, Dict, List, Optional, Mapping, Union
-
 import bugsnag
 import requests
-from urllib.parse import urlparse
 
+from dataclasses import dataclass
 from integrations.astra import get_persona
-from integrations.orchestrator import get_databases
 from pipeline import ResponseAction, ResponseDecision, UserContext
+from typing import Any, Dict, List, Optional, Mapping, Union
 
+# Get intercom env variables
 intercom_token = os.getenv("INTERCOM_TOKEN")
 intercom_client_secret = os.getenv("INTERCOM_CLIENT_SECRET")
 bot_intercom_id = os.getenv("BOT_INTERCOM_ID")
@@ -98,7 +96,7 @@ class IntercomConversationInfo:
     conversation_id: str
     contact: Dict[str, Any]
     user_question: str
-    is_datastax_user: bool
+    is_user: bool
     debug_mode: bool
     source_url: str
 
@@ -208,6 +206,8 @@ class IntercomResponseDecision(ResponseDecision):
                 response_code=400,
             )
 
+        company_url = os.getenv("COMPANY_URL", "")
+
         # If we passed every check above, should proceed with querying the LLM
         return cls(
             should_return_early=False,
@@ -215,7 +215,7 @@ class IntercomResponseDecision(ResponseDecision):
                 conversation_id=data["item"]["id"],
                 contact=get_intercom_contact_by_id(author["id"]),
                 user_question=user_question,
-                is_datastax_user="@datastax.com" in author["email"],
+                is_user=f"@{company_url}" in author["email"] and company_url != "",
                 debug_mode="[DEBUG]" in user_question,
                 source_url=data["item"]["source"]["url"],
             ),
@@ -229,35 +229,7 @@ class IntercomUserContext(UserContext):
         cls, conv_info: IntercomConversationInfo
     ) -> "IntercomUserContext":
         # Grab needed parameters
-        mode = os.getenv("MODE", "Development")
         conversation_id = conv_info.conversation_id  # Astra User Id
-
-        # Parse the source url of the request
-        parsed_url = urlparse(conv_info.source_url)
-        source_id = parsed_url.path.split("/")[-1]
-
-        # Get the organization and associated databases
-        org_id = source_id if conv_info.source_url is not None else ""
-        databases = (
-            get_databases(org_id)
-            if mode.lower() == "development" or mode.lower() == "feat"
-            else []
-        )
-
-        # Find the preferred programming language of the user
-        programming_language = conv_info.contact.get("custom_attributes", {}).get(
-            "programmingLanguage", "Javascript"
-        )
-
-        # Get all databases as a string associated with this user
-        dbs_string = "Cannot retrieve databases for users in environments other than development."
-        for db in databases:
-            dbs_string += f"- {json.dumps(db)}\n"
-
-        # Build a string associated
-        db_text = ""
-        if mode.lower() == "development":
-            db_text = f"{'- The user has not created any databases' if databases == [] else '- Here are all the end-users databases: ' + dbs_string}"
 
         # Build user context information present
         context_str = "No user information present."
@@ -270,8 +242,6 @@ class IntercomUserContext(UserContext):
                 f"Here is information on the user:\n"
                 f"- User Name: {conv_info.contact['name']}\n"
                 f"- User Email: {conv_info.contact['email']}\n"
-                f"- User Primary Programming Language (also known as favorite programming language and preferred programming language): {programming_language}\n"
-                f"{db_text}"
             )
 
         # Send an intercom debug message if debug mode is on
@@ -310,13 +280,13 @@ class IntercomResponseAction(ResponseAction):
                 conv_info.conversation_id, "\nDocuments retrieved: " + responses_from_vs
             )
 
-        # Either comment or message based on whether its a datastax user
-        if conv_info.is_datastax_user:
+        # Either comment or message based on whether its a current user
+        if conv_info.is_user:
             send_intercom_message(conv_info.conversation_id, bot_response)
         else:
             add_comment_to_intercom_conversation(
                 conv_info.conversation_id,
-                f"NoSQL Assistant Suggested Response: {bot_response}",
+                f"Assistant Suggested Response: {bot_response}",
             )
 
         # Return the result with the full response if desired

@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 # TODO: Probably make this unnecessary with better abstractions
 load_dotenv(".env")
 
-from chatbot_api.nosql_assistant import AssistantBison
+from chatbot_api.assistant import AssistantBison
 from integrations.astra import init_astra_get_table_name
 from integrations.google import init_gcp
 from integrations.intercom import (
@@ -43,9 +43,9 @@ logger.addHandler(handler)
 
 # Define the FastAPI application
 app = FastAPI(
-    title="NoSQL Assistant",
+    title="AI Chatbot Starter",
     description="An LLM-powered Chatbot for Documentation",
-    summary="AI Chatbot Starter",
+    summary="Build an LLM-powered Chatbot for a given documentation set",
     version="0.0.1",
     terms_of_service="http://example.com/terms/",
     license_info={
@@ -111,9 +111,7 @@ def conversations(request: Request):
             response_decision.conversation_info
         )
 
-        ##
-        # FINALLY, call the assistant
-        ##
+        # Finally, call the assistant to retrieve a response
         bot_response, responses_from_vs, context = assistant.get_response(
             user_input=user_context.user_question,
             persona=user_context.persona,
@@ -128,6 +126,7 @@ def conversations(request: Request):
             context=context,
         )
 
+        # Return the API response with the appropriate response code
         return JSONResponse(
             content=response_action.response_dict,
             status_code=response_action.response_code,

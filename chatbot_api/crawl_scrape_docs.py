@@ -48,48 +48,6 @@ def get_all_website_links(url):
     return urls
 
 
-def crawl_website(url, output_file):
-    urls = get_all_website_links(url)
-    with open(output_file, "w", encoding="utf-8") as f_out:
-        for url in tqdm.tqdm(urls):
-            response = requests.get(url)
-            response.encoding = (
-                response.apparent_encoding
-            )  # Use chardet to guess the encoding
-            soup = BeautifulSoup(response.text, "html.parser")
-            soup = clean_html(soup)
-            f_out.write(
-                "Following page's URL link: ~~" + str(url) + "~~\n" + soup.get_text()
-            )
-
-
-def scrape_website(url, output_file):
-    with open(output_file, "w", encoding="utf-8") as f_out:
-        response = requests.get(url)
-        response.encoding = (
-            response.apparent_encoding
-        )  # Use chardet to guess the encoding
-        soup = BeautifulSoup(response.text, "html.parser")
-        soup = clean_html(soup)
-        f_out.write(
-            "Following page's URL link: ~~" + str(url) + "~~\n" + soup.get_text()
-        )
-
-
-def scrape_multiple_sites(urls, output_file):
-    with open(output_file, "w", encoding="utf-8") as f_out:
-        for url in tqdm.tqdm(urls):
-            response = requests.get(url)
-            response.encoding = (
-                response.apparent_encoding
-            )  # Use chardet to guess the encoding
-            soup = BeautifulSoup(response.text, "html.parser")
-            soup = clean_html(soup)
-            f_out.write(
-                "Following page's URL link: ~~" + str(url) + "~~\n" + soup.get_text()
-            )
-
-
 def clean_html(soup):
     # Remove unwanted HTML tags
     for unwanted_tag in soup(["script", "style", "header", "footer", "nav", "aside"]):

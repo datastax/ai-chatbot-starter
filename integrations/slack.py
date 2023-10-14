@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
+import os
 
 from pipeline import ResponseAction
 
-SLACK_WEBHOOK_URL = (
-    "https://hooks.slack.com/services/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"
-)
+
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
 
 def send_slack_message(message: str) -> None:

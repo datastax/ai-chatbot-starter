@@ -4,7 +4,7 @@ import sys
 from typing import List, Optional, Tuple
 
 from langchain.embeddings.base import Embeddings
-from langchain.embeddings import VertexAIEmbeddings
+from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from llama_index import VectorStoreIndex, ServiceContext
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
@@ -13,7 +13,7 @@ from vertexai.preview.language_models import TextGenerationModel
 sys.path.append(os.getcwd())
 from chatbot_api.prompt_util import get_template
 from integrations.astra import DEFAULT_TABLE_NAME
-from integrations.google import GECKO_EMB_DIM
+from integrations.google import GECKO_EMB_DIM, init_gcp
 
 
 class NoSqlAssistant(ABC):
@@ -103,7 +103,12 @@ class AssistantBison(NoSqlAssistant):
         custom_rules: Optional[List[str]] = None,
     ):
         if embeddings is None:
-            embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@latest")
+            llm_provider = os.getenv("LLM_PROVIDER", "openai")
+            if llm_provider == "openai":
+                embeddings = OpenAIEmbeddings()
+            else:
+                init_gcp()
+                embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@latest")
 
         super().__init__(embeddings, table_name, k)
         # Create the model and chat session
