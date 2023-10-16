@@ -1,6 +1,6 @@
-# AI Chatbot
+# AI Chatbot Starter
 
-This AI Chatbot is designed to help developers find the information they need to debug their issues.
+This AI Chatbot Starter is designed to help developers find the information they need to debug their issues.
 
 It should answer customer questions about the products or services specified.
 
