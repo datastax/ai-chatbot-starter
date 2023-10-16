@@ -16,7 +16,7 @@ from integrations.astra import DEFAULT_TABLE_NAME
 from integrations.google import GECKO_EMB_DIM, init_gcp
 
 
-class NoSqlAssistant(ABC):
+class Assistant(ABC):
     def __init__(
         self,
         embeddings: Optional[Embeddings] = None,
@@ -56,22 +56,19 @@ class NoSqlAssistant(ABC):
         results = response.source_nodes
 
         raw_text = []
-        first_url = ""
-        for i, doc in enumerate(results):
+        for doc in results:
             try:
                 raw_text.append(
                     doc.get_content()
                     + f"\nPrevious document was from URL link: {doc.metadata['source']}"
                 )
-                if len(first_url) == 0:
-                    first_url = doc.metadata["url"]
             except KeyError:
                 raw_text.append(doc.get_content())
         vector_search_results = "- " + "\n\n- ".join(
             raw_text
         )  # Prevent any one document from being too long
 
-        return vector_search_results, first_url
+        return vector_search_results
 
     # Get a response from the chatbot, excluding the responses from the vector search
     @abstractmethod
@@ -88,7 +85,7 @@ class NoSqlAssistant(ABC):
         """
 
 
-class AssistantBison(NoSqlAssistant):
+class AssistantBison(Assistant):
     # Instantiate the class using the default bison model
     def __init__(
         self,
@@ -132,7 +129,7 @@ class AssistantBison(NoSqlAssistant):
         user_context: str = "",
         include_context: bool = True,
     ) -> Tuple[str, str, str]:
-        responses_from_vs, first_url = self.find_relevant_docs(query=user_input)
+        responses_from_vs = self.find_relevant_docs(query=user_input)
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input
         if include_context:
