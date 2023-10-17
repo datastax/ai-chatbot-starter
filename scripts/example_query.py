@@ -13,7 +13,7 @@ load_dotenv(".env")
 ###
 # Let's define the question right here
 ###
-CHATBOT_QUESTION = "How do i get started?"
+CHATBOT_QUESTION = "What is Stargate?"
 intercom_secret = os.getenv("INTERCOM_CLIENT_SECRET")
 
 

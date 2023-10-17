@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 import sys
 from typing import List, Optional, Tuple
 
+import openai
+
 from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from llama_index import VectorStoreIndex, ServiceContext
@@ -100,16 +102,16 @@ class AssistantBison(Assistant):
         custom_rules: Optional[List[str]] = None,
     ):
         if embeddings is None:
-            llm_provider = os.getenv("LLM_PROVIDER", "openai")
-            if llm_provider == "openai":
+            self.llm_provider = os.getenv("LLM_PROVIDER", "openai")
+            if self.llm_provider == "openai":
                 embeddings = OpenAIEmbeddings()
+                model = openai.ChatCompletion
             else:
                 init_gcp()
                 embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@latest")
+                model = TextGenerationModel.from_pretrained("text-bison@001")
 
         super().__init__(embeddings, table_name, k)
-        # Create the model and chat session
-        model = TextGenerationModel.from_pretrained("text-bison@001")
 
         self.parameters = {
             "temperature": temp,  # Temperature controls the degree of randomness in token selection.
@@ -142,6 +144,17 @@ class AssistantBison(Assistant):
                 self.custom_rules,
             )
 
-        bot_response = self.model.predict(context, **self.parameters).text
+        if self.llm_provider == "openai":
+            bot_response_raw = self.model.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": context},
+                    {"role": "user", "content": user_input},
+                ],
+            )
+
+            bot_response = bot_response_raw["choices"][0]["message"]["content"]
+        else:
+            bot_response = self.model.predict(context, **self.parameters).text
 
         return bot_response, responses_from_vs, context

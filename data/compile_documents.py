@@ -11,30 +11,34 @@ from llama_index.vector_stores import CassandraVectorStore
 
 sys.path.append("../")
 from chatbot_api.compile_docs import convert_scraped_files_to_documents
-from integrations.astra import init_astra_session_keyspace_tablename
+from integrations.astra import init_astra, init_astra_get_table_name
 from integrations.google import init_gcp, GECKO_EMB_DIM
 
 dotenv_path = "../.env"
 load_dotenv(dotenv_path)
 
-session, keyspace, table_name = init_astra_session_keyspace_tablename()
+init_astra()
+table_name = init_astra_get_table_name()
 
 # Provider for LLM
 llm_provider = os.getenv("LLM_PROVIDER", "openai")
 if llm_provider == "openai":
-    embed_model = OpenAIEmbeddings()
+    embedding_model = OpenAIEmbeddings()
 else:
     init_gcp()
     embedding_model = LangchainEmbedding(
         VertexAIEmbeddings(model_name="textembedding-gecko@latest")
     )
 
+embedding_dimension = 1536 if llm_provider == "openai" else GECKO_EMB_DIM
+
 vectorstore = CassandraVectorStore(
-    session=session,
-    keyspace=keyspace,
+    session=None,
+    keyspace=None,
     table=table_name,
-    embedding_dimension=GECKO_EMB_DIM,
+    embedding_dimension=embedding_dimension,
 )
+
 storage_context = StorageContext.from_defaults(vector_store=vectorstore)
 service_context = ServiceContext.from_defaults(
     llm=None,

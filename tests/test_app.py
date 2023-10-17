@@ -9,6 +9,10 @@ import hashlib
 from pydantic.utils import deep_update
 import pytest
 
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
 
 def get_headers(body):
     """Helper to get necessary request headers for successful POST
@@ -40,7 +44,7 @@ def client(init_env):
 
 @pytest.fixture(scope="function")
 def standard_request():
-    return load_test_request("test_request.json")
+    return load_test_request(os.path.join("tests", "test_request.json"))
 
 
 @pytest.fixture(scope="function")
@@ -68,7 +72,7 @@ def test_standard_case(standard_request, client):
 
 def test_broad_case(standard_request, client):
     # Process each question sequentially in the test questions file
-    with open("test_questions.txt", "r") as file:
+    with open(os.path.join("tests", "test_questions.txt"), "r") as file:
         lines = [line.strip() for line in file]
 
     for line in lines:

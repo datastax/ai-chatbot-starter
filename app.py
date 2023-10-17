@@ -27,9 +27,8 @@ from integrations.intercom import (
 mode = os.getenv("MODE", "Development")
 bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
 
-# Setup astra and GCP
+# Setup astra table name
 table_name = init_astra_get_table_name()
-init_gcp()
 
 # Configure bugsnag
 bugsnag.configure(api_key=bugsnag_api_key, project_root="/", release_stage=mode)
