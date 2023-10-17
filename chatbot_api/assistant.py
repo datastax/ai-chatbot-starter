@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 import sys
 from typing import List, Optional, Tuple
 
-import openai
-
 from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from llama_index import VectorStoreIndex, ServiceContext
@@ -16,6 +14,7 @@ sys.path.append(os.getcwd())
 from chatbot_api.prompt_util import get_template
 from integrations.astra import DEFAULT_TABLE_NAME
 from integrations.google import GECKO_EMB_DIM, init_gcp
+from integrations.openai import OPENAI_EMB_DIM, init_chat_completion
 
 
 class Assistant(ABC):
@@ -24,10 +23,13 @@ class Assistant(ABC):
         embeddings: Optional[Embeddings] = None,
         table_name: str = DEFAULT_TABLE_NAME,
         k: int = 4,
+        llm_provider: str = "openai",
     ):
         # Set the embeddings, keyspace, and table name from the args/kwargs
         self.embeddings = embeddings
         self.table_name = table_name
+
+        embedding_dimension = OPENAI_EMB_DIM if llm_provider == "openai" else GECKO_EMB_DIM
 
         # Initialize the vector store, which contains the vector embeddings of the data
         # NOTE: With cassio init, session & keyspace are inferred from global default
@@ -35,7 +37,7 @@ class Assistant(ABC):
             session=None,
             keyspace=None,
             table=table_name,
-            embedding_dimension=GECKO_EMB_DIM,
+            embedding_dimension=embedding_dimension,
         )
 
         self.embedding_model = LangchainEmbedding(self.embeddings)
@@ -104,14 +106,14 @@ class AssistantBison(Assistant):
         if embeddings is None:
             self.llm_provider = os.getenv("LLM_PROVIDER", "openai")
             if self.llm_provider == "openai":
-                embeddings = OpenAIEmbeddings()
-                model = openai.ChatCompletion
+                embeddings = OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDINGS_MODEL", "text-embedding-ada-002"))
+                model = init_chat_completion()
             else:
                 init_gcp()
-                embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@latest")
-                model = TextGenerationModel.from_pretrained("text-bison@001")
+                embeddings = VertexAIEmbeddings(model_name=os.getenv("GOOGLE_EMBEDDINGS_MODEL", "textembedding-gecko@latest"))
+                model = TextGenerationModel.from_pretrained(os.getenv("GOOGLE_TEXTGEN_MODEL", "text-bison@001"))
 
-        super().__init__(embeddings, table_name, k)
+        super().__init__(embeddings, table_name, k, self.llm_provider)
 
         self.parameters = {
             "temperature": temp,  # Temperature controls the degree of randomness in token selection.
@@ -146,7 +148,7 @@ class AssistantBison(Assistant):
 
         if self.llm_provider == "openai":
             bot_response_raw = self.model.create(
-                model="gpt-3.5-turbo",
+                model=os.getenv("OPENAI_TEXTGEN_MODEL", "gpt-3.5-turbo"),
                 messages=[
                     {"role": "system", "content": context},
                     {"role": "user", "content": user_input},
