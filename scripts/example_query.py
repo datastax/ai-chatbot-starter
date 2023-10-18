@@ -1,4 +1,4 @@
-import requests
+import httpx
 import json
 import os
 import hmac
@@ -13,7 +13,7 @@ load_dotenv(".env")
 ###
 # Let's define the question right here
 ###
-CHATBOT_QUESTION = "What is Stargate?"
+CHATBOT_QUESTION = "What is Stargate? Can you give 5 key benefits?"
 intercom_secret = os.getenv("INTERCOM_CLIENT_SECRET")
 
 
@@ -45,14 +45,9 @@ def call_assistant(chatbot_question=CHATBOT_QUESTION):
 
     headers = get_headers(user_data)
 
-    r = requests.post("http://127.0.0.1:5010/chat", json=user_data, headers=headers)
-
-    # Check if the request was successful
-    if r.status_code == requests.codes.created:
-        return r.json()
-    else:
-        return f"Request failed with status code {r.status_code}: {r.text}"
-
+    with httpx.stream('POST', "http://127.0.0.1:5010/chat", json=user_data, headers=headers, timeout=600) as r:
+        for chunk in r.iter_text():
+            print(chunk, flush=True, end="")
 
 example_result = call_assistant()
 

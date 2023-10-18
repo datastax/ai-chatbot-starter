@@ -8,7 +8,7 @@ from bugsnag.handlers import BugsnagHandler
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 # NOTE: Load dotenv before importing any code from other files for globals
 # TODO: Probably make this unnecessary with better abstractions
@@ -117,19 +117,21 @@ def conversations(request: Request):
             user_context=user_context.context_str,
         )
 
-        # Take action based on the response from the bot
-        response_action = IntercomResponseAction.from_asst_response(
-            conv_info=response_decision.conversation_info,
-            bot_response=bot_response,
-            responses_from_vs=responses_from_vs,
-            context=context,
-        )
+        def stream_data():
+            txt_response = ""
+            for text in bot_response.response_gen:
+                txt_response += text
+                yield text
 
-        # Return the API response with the appropriate response code
-        return JSONResponse(
-            content=response_action.response_dict,
-            status_code=response_action.response_code,
-        )
+            # Take action based on the response from the bot
+            IntercomResponseAction.from_asst_response(
+                conv_info=response_decision.conversation_info,
+                bot_response=txt_response,
+                responses_from_vs=responses_from_vs,
+                context=context,
+            )
+        
+        return StreamingResponse(stream_data(), media_type="text/event-stream")
 
     except Exception as e:
         # Notify bugsnag if we hit an error
