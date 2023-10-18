@@ -25,7 +25,9 @@ table_name = init_astra_get_table_name()
 # Provider for LLM
 llm_provider = os.getenv("LLM_PROVIDER", "openai")
 if llm_provider == "openai":
-    embedding_model = OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDINGS_MODEL", "text-embedding-ada-002"))
+    embedding_model = LangchainEmbedding(
+        OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDINGS_MODEL", "text-embedding-ada-002"))
+    )
 else:
     init_gcp()
     embedding_model = LangchainEmbedding(
@@ -70,6 +72,6 @@ def list_folders(directory):
         d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))
     ]
 
-
-for folder in list_folders("."):
-    add_documents(folder)
+if __name__ == '__main__':
+    for folder in list_folders("."):
+        add_documents(folder)

@@ -1,6 +1,3 @@
-# Usage:
-# process_directory("/path/to/source/directory", "/path/to/destination/directory")
-
 import os
 from typing import List
 from llama_index import Document

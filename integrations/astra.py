@@ -4,7 +4,6 @@ from typing import Any, Dict
 import cassio
 
 DEFAULT_TABLE_NAME = "data"
-DEFAULT_KEYSPACE = "chat"
 
 
 def get_persona(contact: Dict[str, Any]) -> str:
@@ -19,7 +18,7 @@ def init_astra() -> None:
     cassio.init(
         token=os.getenv("ASTRA_DB_TOKEN"),
         database_id=os.getenv("ASTRA_DB_DATABASE_ID"),
-        keyspace=os.getenv("ASTRA_DB_KEYSPACE", DEFAULT_KEYSPACE),
+        keyspace=os.getenv("ASTRA_DB_KEYSPACE"),
     )
 
 
