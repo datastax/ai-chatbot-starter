@@ -16,7 +16,6 @@ load_dotenv(".env")
 
 from chatbot_api.assistant import AssistantBison
 from integrations.astra import init_astra_get_table_name
-from integrations.google import init_gcp
 from integrations.intercom import (
     IntercomResponseAction,
     IntercomResponseDecision,
@@ -131,7 +130,8 @@ def conversations(request: Request):
                 context=context,
             )
         
-        return StreamingResponse(stream_data(), media_type="text/event-stream")
+        return StreamingResponse(stream_data(), media_type="text/event-stream",
+                                 status_code=201)
 
     except Exception as e:
         # Notify bugsnag if we hit an error
