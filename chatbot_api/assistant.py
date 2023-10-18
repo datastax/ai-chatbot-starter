@@ -1,20 +1,21 @@
 import os
+
 from abc import ABC, abstractmethod
-import sys
 from typing import List, Optional, Tuple
 
 from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
+from langchain.llms import VertexAI
 from llama_index import VectorStoreIndex, ServiceContext
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
+from llama_index.llms import OpenAI
 from vertexai.preview.language_models import TextGenerationModel
 
-sys.path.append(os.getcwd())
 from chatbot_api.prompt_util import get_template
 from integrations.astra import DEFAULT_TABLE_NAME
 from integrations.google import GECKO_EMB_DIM, init_gcp
-from integrations.openai import OPENAI_EMB_DIM, init_chat_completion
+from integrations.openai import OPENAI_EMB_DIM
 
 
 class Assistant(ABC):
@@ -23,7 +24,8 @@ class Assistant(ABC):
         embeddings: Optional[Embeddings] = None,
         table_name: str = DEFAULT_TABLE_NAME,
         k: int = 4,
-        llm_provider: str = "openai",
+        llm = None,
+        llm_provider: str = "openai"
     ):
         # Set the embeddings, keyspace, and table name from the args/kwargs
         self.embeddings = embeddings
@@ -43,7 +45,7 @@ class Assistant(ABC):
         self.embedding_model = LangchainEmbedding(self.embeddings)
 
         self.service_context = ServiceContext.from_defaults(
-            llm=None, embed_model=self.embedding_model
+            llm=llm, embed_model=self.embedding_model
         )
 
         self.index = VectorStoreIndex.from_vector_store(
@@ -96,33 +98,36 @@ class AssistantBison(Assistant):
         embeddings: Optional[Embeddings] = None,
         table_name: str = DEFAULT_TABLE_NAME,
         temp: float = 0.2,
-        top_p: float = 0.8,
-        top_k: int = 40,
         max_tokens_response: int = 256,
         k: int = 4,
         company: str = "",
         custom_rules: Optional[List[str]] = None,
     ):
+        self.llm_provider = os.getenv("LLM_PROVIDER", "openai")
         if embeddings is None:
-            self.llm_provider = os.getenv("LLM_PROVIDER", "openai")
             if self.llm_provider == "openai":
                 embeddings = OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDINGS_MODEL", "text-embedding-ada-002"))
-                model = init_chat_completion()
-            else:
+            elif self.llm_provider == "google":
                 init_gcp()
                 embeddings = VertexAIEmbeddings(model_name=os.getenv("GOOGLE_EMBEDDINGS_MODEL", "textembedding-gecko@latest"))
-                model = TextGenerationModel.from_pretrained(os.getenv("GOOGLE_TEXTGEN_MODEL", "text-bison@001"))
+            else:
+                raise AssertionError("LLM Provider must be one of openai or google")
+        
+        # Choose the LLM based on the provider
+        if self.llm_provider == "openai":
+            self.llm = OpenAI(model=os.getenv("OPENAI_TEXTGEN_MODEL"))
+        elif self.llm_provider == "google":
+            self.llm = VertexAI(model_name=os.getenv("GOOGLE_TEXTGEN_MODEL"))
+        else:
+            raise AssertionError("LLM Provider must be one of openai or google")
 
-        super().__init__(embeddings, table_name, k, self.llm_provider)
+        super().__init__(embeddings, table_name, k, self.llm, self.llm_provider)
 
         self.parameters = {
             "temperature": temp,  # Temperature controls the degree of randomness in token selection.
-            "max_output_tokens": max_tokens_response,  # Token limit determines the maximum amount of text output.
-            "top_p": top_p,
-            # Tokens are selected from most probable to least until the sum of their probabilities equals the top_p value.
-            "top_k": top_k,  # A top_k of 1 means the selected token is the most probable among all tokens.
+            "max_tokens": max_tokens_response,  # Token limit determines the maximum amount of text output.
         }
-        self.model = model
+
         self.company = company
         self.custom_rules = custom_rules or []
 
@@ -146,17 +151,6 @@ class AssistantBison(Assistant):
                 self.custom_rules,
             )
 
-        if self.llm_provider == "openai":
-            bot_response_raw = self.model.create(
-                model=os.getenv("OPENAI_TEXTGEN_MODEL", "gpt-3.5-turbo"),
-                messages=[
-                    {"role": "system", "content": context},
-                    {"role": "user", "content": user_input},
-                ],
-            )
-
-            bot_response = bot_response_raw["choices"][0]["message"]["content"]
-        else:
-            bot_response = self.model.predict(context, **self.parameters).text
+        bot_response = self.query_engine.query(context)
 
         return bot_response, responses_from_vs, context
