@@ -3,6 +3,7 @@ import json
 import os
 import hmac
 import hashlib
+import sys
 
 
 from dotenv import load_dotenv
@@ -72,7 +73,8 @@ def call_assistant_sync(chatbot_question=CHATBOT_QUESTION):
 
 
 if __name__ == '__main__':
-    call_assistant_async()
+    call_assistant_async(chatbot_question=sys.argv[1])
 
-    example_result = call_assistant_sync()
-    print(example_result)
+    # Alternatively
+    # example_result = call_assistant_sync()
+    # print(example_result)
