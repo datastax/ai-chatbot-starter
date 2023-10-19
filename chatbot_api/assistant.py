@@ -52,7 +52,8 @@ class Assistant(ABC):
             vector_store=self.vectorstore, service_context=self.service_context
         )
 
-        self.query_engine = self.index.as_query_engine(similarity_top_k=k)
+        self.query_engine = self.index.as_query_engine(similarity_top_k=k,
+                                                       streaming=True)
 
     # Get a response from the vector search, aka the relevant data
     def find_relevant_docs(self, query: str) -> Tuple[str, str]:
