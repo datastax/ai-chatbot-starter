@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster
+FROM python:3.11-slim-buster
 
 ARG BRANCH_NAME
 ENV BRANCH_NAME=$BRANCH_NAME
@@ -12,8 +12,6 @@ RUN apt-get -y update
 RUN apt-get -y install git
 
 COPY requirements.txt requirements.txt
-RUN pip3 uninstall cassio
-RUN pip3 uninstall langchain
 RUN pip3 install -r requirements.txt --no-cache-dir
 
 COPY . .
