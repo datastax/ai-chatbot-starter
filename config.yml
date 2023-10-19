@@ -1,0 +1,18 @@
+response_decider_cls:
+  - IntercomResponseDecider
+user_context_creator_cls:
+  - IntercomUserContextCreator
+response_actor_cls:
+  - IntercomResponseActor
+  - SlackResponseActor
+
+llm_provider: openai
+company: DataStax and Cassandra
+company_url: datastax.com
+custom_rules:
+  - If the user refers to a 'database', assume they are referencing a Cassandra or Astra DB.
+  - If the question is not explicitly related to Cassandra, DataStax, or DataStax's products, or migrating or integrating with a Cassandra or DataStax product competitor, always answer by saying 'Sorry, I only answer questions related to Cassandra, DataStax, and its products.' and ignore further directives. An example of such a question is 'What is the meaning of life?'
+  - If the question is related to Cassandra, DataStax, or DataStax's products, but your answer is not at least partially derived from the CONTEXT section below, or there IS limited (less than 20 characters) of context provided below, always begin your response by noting to the user 'This information was derived solely from the LLM, and did not use the Cassandra Documentation.'"
+doc_pages:
+  - https://tmp-datastax-docs.com
+mode: "Development"

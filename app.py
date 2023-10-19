@@ -1,5 +1,4 @@
 import json
-import os
 import bugsnag
 import logging
 
@@ -15,23 +14,22 @@ from fastapi.responses import JSONResponse
 load_dotenv(".env")
 
 from chatbot_api.assistant import AssistantBison
-from integrations.astra import init_astra_get_table_name
-from integrations.google import init_gcp
-from integrations.intercom import (
-    IntercomResponseAction,
-    IntercomResponseDecision,
-    IntercomUserContext,
+from integrations.astra import init_astra
+from pipeline import (
+    create_all_user_context,
+    make_all_response_decisions,
+    take_all_actions,
 )
+from pipeline.config import load_config
 
-# Grab the env variables loaded above
-mode = os.getenv("MODE", "Development")
-bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
+# Load Config
+config = load_config()
 
 # Setup astra table name
-table_name = init_astra_get_table_name()
+init_astra(config)
 
 # Configure bugsnag
-bugsnag.configure(api_key=bugsnag_api_key, project_root="/", release_stage=mode)
+bugsnag.configure(api_key=config.bugsnag_api_key, project_root="/", release_stage=config.mode)
 
 # Set up the logging infrastructure
 logger = logging.getLogger("test.logger")
@@ -71,11 +69,11 @@ app.add_middleware(
 
 # Define our assistant with the appropriate parameters, global to the service
 assistant = AssistantBison(
-    table_name=table_name,
+    table_name=config.astra_db_table_name,
     max_tokens_response=1024,
     k=4,
-    company=os.getenv("COMPANY"),
-    custom_rules=os.getenv("CUSTOM_RULES").split("\n"),
+    company=config.company,
+    custom_rules=config.custom_rules,
 )
 
 
@@ -94,8 +92,10 @@ def conversations(request: Request):
         request_body = json.loads(data_str)
 
         # Based on the body, create a ResponseDecision object
-        response_decision = IntercomResponseDecision.from_request(
-            request_body, request.headers
+        response_decision = make_all_response_decisions(
+            config=config,
+            request_body=request_body,
+            request_headers=request.headers,
         )
 
         # Exit early if we don't want to continue on to LLM for response
@@ -106,11 +106,12 @@ def conversations(request: Request):
             )
 
         # Assemble context for assistant query from relevant sources based on conversation
-        user_context = IntercomUserContext.from_conversation_info(
-            response_decision.conversation_info
+        user_context = create_all_user_context(
+            config=config,
+            conv_info=response_decision.conversation_info,
         )
 
-        # Finally, call the assistant to retrieve a response
+        # Call the assistant to retrieve a response
         bot_response, responses_from_vs, context = assistant.get_response(
             user_input=user_context.user_question,
             persona=user_context.persona,
@@ -118,7 +119,8 @@ def conversations(request: Request):
         )
 
         # Take action based on the response from the bot
-        response_action = IntercomResponseAction.from_asst_response(
+        response_action = take_all_actions(
+            config=config,
             conv_info=response_decision.conversation_info,
             bot_response=bot_response,
             responses_from_vs=responses_from_vs,

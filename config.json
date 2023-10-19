@@ -1,5 +1,0 @@
-{
-  "response_decision_cls": ["IntercomResponseDecision"],
-  "user_context_cls": ["IntercomUserContext", "AstraDBUserContext"],
-  "response_action_cls": ["IntercomResponseAction", "SlackResponseAction"]
-}

@@ -6,11 +6,10 @@ from typing import List, Optional, Tuple
 from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from langchain.llms import VertexAI
-from llama_index import VectorStoreIndex, ServiceContext
+from llama_index import VectorStoreIndex, ServiceContext, Response
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
 from llama_index.llms import OpenAI
-from vertexai.preview.language_models import TextGenerationModel
 
 from chatbot_api.prompt_util import get_template
 from integrations.astra import DEFAULT_TABLE_NAME
@@ -55,7 +54,7 @@ class Assistant(ABC):
         self.query_engine = self.index.as_query_engine(similarity_top_k=k)
 
     # Get a response from the vector search, aka the relevant data
-    def find_relevant_docs(self, query: str) -> Tuple[str, str]:
+    def find_relevant_docs(self, query: str) -> str:
         response = self.query_engine.query(
             query
         )  # TODO: Retriever (index.as_retriever (returns list of source nodes instead of response object))
@@ -137,7 +136,7 @@ class AssistantBison(Assistant):
         persona: str,
         user_context: str = "",
         include_context: bool = True,
-    ) -> Tuple[str, str, str]:
+    ) -> Tuple[Response, str, str]:
         responses_from_vs = self.find_relevant_docs(query=user_input)
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input

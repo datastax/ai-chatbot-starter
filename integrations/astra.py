@@ -1,9 +1,8 @@
-import os
 from typing import Any, Dict
 
 import cassio
 
-DEFAULT_TABLE_NAME = "data"
+from pipeline.config import Config
 
 
 def get_persona(contact: Dict[str, Any]) -> str:
@@ -13,16 +12,10 @@ def get_persona(contact: Dict[str, Any]) -> str:
     return "default"
 
 
-def init_astra() -> None:
+def init_astra(config: Config) -> None:
     """Initializes the Astra DB session via cassio"""
     cassio.init(
-        token=os.getenv("ASTRA_DB_TOKEN"),
-        database_id=os.getenv("ASTRA_DB_DATABASE_ID"),
-        keyspace=os.getenv("ASTRA_DB_KEYSPACE"),
+        token=config.astra_db_token,
+        database_id=config.astra_db_database_id,
+        keyspace=config.astra_db_keyspace,
     )
-
-
-def init_astra_get_table_name() -> str:
-    """Initializes Astra connection and returns the table name"""
-    init_astra()
-    return os.getenv("ASTRA_DB_TABLE_NAME", DEFAULT_TABLE_NAME)
