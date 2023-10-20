@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from integrations.astra import get_persona
 from pipeline import (
     BaseIntegration,
-    EndpointResponse,
     ResponseActor,
     ResponseDecider,
     ResponseDecision,
@@ -263,10 +262,10 @@ class IntercomResponseActor(IntercomIntegrationMixin, ResponseActor):
     def take_action(
         self,
         conv_info: IntercomConversationInfo,
-        bot_response: str,
+        text_response: str,
         responses_from_vs: str,
         context: str,
-    ) -> EndpointResponse:
+    ) -> None:
         # One more debugging message
         if conv_info.debug_mode:
             self.send_intercom_message(
@@ -275,21 +274,16 @@ class IntercomResponseActor(IntercomIntegrationMixin, ResponseActor):
 
         # Either comment or message based on whether its a current user
         if conv_info.is_user:
-            self.send_intercom_message(conv_info.conversation_id, bot_response)
+            self.send_intercom_message(conv_info.conversation_id, text_response)
         else:
             self.add_comment_to_intercom_conversation(
                 conv_info.conversation_id,
-                f"Assistant Suggested Response: {bot_response}",
+                f"Assistant Suggested Response: {text_response}",
             )
 
         # Return the result with the full response if desired
         result = {"ok": True, "message": "Response submitted successfully."}
         if self.config.intercom_include_response:
-            result["response"] = bot_response
+            result["response"] = text_response
         if self.config.intercom_include_context:
             result["context"] = context
-
-        return EndpointResponse(
-            response_dict=result,
-            response_code=requests.codes.created,
-        )

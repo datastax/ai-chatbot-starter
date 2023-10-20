@@ -4,10 +4,11 @@ from typing import List, Optional, Tuple
 from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from langchain.llms import VertexAI
-from llama_index import VectorStoreIndex, ServiceContext, Response
+from llama_index import VectorStoreIndex, ServiceContext
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
 from llama_index.llms import OpenAI
+from llama_index.response.schema import StreamingResponse
 
 from chatbot_api.prompt_util import get_template
 from integrations.google import GECKO_EMB_DIM, init_gcp
@@ -48,7 +49,8 @@ class Assistant(ABC):
             vector_store=self.vectorstore, service_context=self.service_context
         )
 
-        self.query_engine = self.index.as_query_engine(similarity_top_k=k)
+        self.query_engine = self.index.as_query_engine(similarity_top_k=k,
+                                                       streaming=True)
 
     # Get a response from the vector search, aka the relevant data
     def find_relevant_docs(self, query: str) -> str:
@@ -127,7 +129,7 @@ class AssistantBison(Assistant):
         persona: str,
         user_context: str = "",
         include_context: bool = True,
-    ) -> Tuple[Response, str, str]:
+    ) -> Tuple[StreamingResponse, str, str]:
         responses_from_vs = self.find_relevant_docs(query=user_input)
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input

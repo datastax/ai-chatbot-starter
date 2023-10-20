@@ -1,9 +1,8 @@
 from typing import Any
 
-from llama_index import Response
 import requests
 
-from pipeline import EndpointResponse, ResponseActor
+from pipeline import ResponseActor
 
 
 class SlackResponseActor(ResponseActor):
@@ -16,12 +15,10 @@ class SlackResponseActor(ResponseActor):
         )
 
     def take_action(
-        self, conv_info: Any, bot_response: Response, responses_from_vs: str, context: str
-    ) -> EndpointResponse:
+        self, conv_info: Any, text_response: str, responses_from_vs: str, context: str
+    ) -> None:
         self.send_slack_message("*PROMPT*")
         self.send_slack_message(context)
 
         self.send_slack_message("*RESPONSE*")
-        self.send_slack_message(bot_response)
-
-        return None
+        self.send_slack_message(text_response)
