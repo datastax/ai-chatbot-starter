@@ -47,9 +47,13 @@ class Config(BaseModel):
     # TODO: Move these down one level further into sub-Models that can be defined
     #       in the corresponding integrations file
     openai_api_key: Optional[str] = None
+    openai_embeddings_model: str = "text-embedding-ada-002"
+    openai_textgen_model: str = "gpt-3.5-turbo"
 
     google_credentials: Optional[str] = None
     google_project_id: Optional[str] = None
+    google_embeddings_model: str = "textembedding-gecko@latest"
+    google_textgen_model: str = "TODO"
 
     bot_intercom_id: Optional[str] = None
     intercom_token: Optional[str] = None
@@ -77,10 +81,13 @@ class Config(BaseModel):
         else:
             raise ValueError(f"Unrecognized llm_provider {self.llm_provider}")
 
+        return self
+
     @model_validator(mode="after")
     def check_integration_creds(self):
         """Validates that any integrations being used have credentials present"""
         # Avoiding circular import
+        import integrations  # noqa: needed to populate the integrations registry
         from .base_integration import integrations_registry
 
         all_integrations = self.response_decider_cls + self.user_context_creator_cls + self.response_decider_cls
@@ -89,10 +96,12 @@ class Config(BaseModel):
             for field in required_fields:
                 assert getattr(self, field) is not None, f"{field} must be specified for integration {integration_cls_name}"
 
+        return self
 
-def load_config() -> Config:
+
+def load_config(path: str = CONFIG_PATH) -> Config:
     """Return the Config for the app - assumes all env vars have been loaded"""
-    with open(CONFIG_PATH) as config_file:
+    with open(path) as config_file:
         yaml_config = yaml.safe_load(config_file)
 
     for field in SENSITIVE_FIELDS:

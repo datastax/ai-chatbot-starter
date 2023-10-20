@@ -9,10 +9,6 @@ import hashlib
 from pydantic.utils import deep_update
 import pytest
 
-from dotenv import load_dotenv
-
-load_dotenv(".env")
-
 
 def get_headers(body):
     """Helper to get necessary request headers for successful POST
@@ -36,10 +32,13 @@ def load_test_request(filename):
 
 
 @pytest.fixture(scope="module")
-def client(init_env):
-    from app import app
+def client(init_config):
+    # Patch necessary things
+    with patch("pipeline.config.load_config") as mock:
+        mock.return_value = init_config
+        from app import app
 
-    yield TestClient(app)
+        yield TestClient(app)
 
 
 @pytest.fixture(scope="function")

@@ -7,14 +7,14 @@ sys.path.append("../")
 
 from dotenv import load_dotenv
 
-load_dotenv("../.env")
-
-
-# The below line will be red in Pycharm, but it's fine
 from chatbot_api.crawl_scrape_docs import crawl_website_parallel
+from pipeline.config import load_config
+
+load_dotenv("../.env")
+config = load_config("../config.yml")
 
 # Astra docs
-for website in os.getenv("DOCUMENTATION_PAGES").split(","):
+for website in config.doc_pages:
     parsed_website = urlparse(website)
     basename_website = os.path.basename(parsed_website.path)
 

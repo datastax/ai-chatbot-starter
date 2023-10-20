@@ -69,7 +69,7 @@ app.add_middleware(
 
 # Define our assistant with the appropriate parameters, global to the service
 assistant = AssistantBison(
-    table_name=config.astra_db_table_name,
+    config=config,
     max_tokens_response=1024,
     k=4,
     company=config.company,

@@ -1,5 +1,4 @@
 import sys
-import os
 import pytest
 
 sys.path.append("../")
@@ -21,13 +20,13 @@ questions = [
 
 
 @pytest.mark.parametrize("persona", ["default"])
-def test_prompts(persona, astra_table_name, gcp_conn):
+def test_prompts(persona, init_config, astra_conn, gcp_conn):
     assistant = AssistantBison(
-        table_name=astra_table_name,
+        config=init_config,
         max_tokens_response=1024,
         k=4,
-        company=os.getenv("COMPANY"),
-        custom_rules=os.getenv("CUSTOM_RULES").split("\n"),
+        company=init_config.company,
+        custom_rules=init_config.custom_rules,
     )
 
     print(f"\n{persona} Questions:")
