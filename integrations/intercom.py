@@ -221,7 +221,6 @@ class IntercomResponseDecider(IntercomIntegrationMixin, ResponseDecider):
         )
 
 
-@dataclass
 class IntercomUserContextCreator(IntercomIntegrationMixin, UserContextCreator):
 
     def create_user_context(
@@ -259,7 +258,6 @@ class IntercomUserContextCreator(IntercomIntegrationMixin, UserContextCreator):
         )
 
 
-@dataclass
 class IntercomResponseActor(IntercomIntegrationMixin, ResponseActor):
 
     def take_action(

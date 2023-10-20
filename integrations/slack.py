@@ -1,12 +1,11 @@
-from dataclasses import dataclass
 from typing import Any
 
+from llama_index import Response
 import requests
 
 from pipeline import EndpointResponse, ResponseActor
 
 
-@dataclass
 class SlackResponseActor(ResponseActor):
     required_fields = ["slack_webhook_url"]
 
@@ -17,7 +16,7 @@ class SlackResponseActor(ResponseActor):
         )
 
     def take_action(
-        self, conv_info: Any, bot_response: str, responses_from_vs: str, context: str
+        self, conv_info: Any, bot_response: Response, responses_from_vs: str, context: str
     ) -> EndpointResponse:
         self.send_slack_message("*PROMPT*")
         self.send_slack_message(context)
