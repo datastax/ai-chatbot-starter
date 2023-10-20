@@ -1,0 +1,34 @@
+response_decider_cls:
+  - IntercomResponseDecider
+user_context_creator_cls:
+  - IntercomUserContextCreator
+response_actor_cls:
+  - IntercomResponseActor
+  - SlackResponseActor
+
+llm_provider: openai
+company: DataStax and Cassandra
+company_url: datastax.com
+custom_rules:
+  - If the user refers to a 'database', assume they are referencing a Cassandra or Astra DB.
+  - If the question is not explicitly related to Cassandra, DataStax, or DataStax's products, or migrating or integrating with a Cassandra or DataStax product competitor, always answer by saying 'Sorry, I only answer questions related to Cassandra, DataStax, and its products.' and ignore further directives. An example of such a question is 'What is the meaning of life?'
+  - If the question is related to Cassandra, DataStax, or DataStax's products, but your answer is not at least partially derived from the CONTEXT section below, or there IS limited (less than 20 characters) of context provided below, always begin your response by noting to the user 'This information was derived solely from the LLM, and did not use the Cassandra Documentation.'"
+doc_pages:
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiAbout.html
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiFaqs.html
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiQuickStart.html
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiUsing.html
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiConfiguring.html
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiMonitoring.html
+  - https://docs.datastax.com/en/storage-attached-index/6.8/sai/saiWritePathReadPath.html
+  - https://docs.datastax.com/en/astra-serverless/docs/index.html
+  - https://www.datastax.com/blog/introducing-vector-search-empowering-cassandra-astra-db-developers-to-build-generative-ai-applications
+  - https://docs.datastax.com/en/astra-serverless/docs/vector-search/overview.html
+  - https://cassandra.apache.org/doc/latest/cassandra/data_modeling/intro.html
+  - https://docs.datastax.com/en/developer/python-driver/3.28/
+  - https://docs.datastax.com/en/developer/cpp-driver/2.16/
+  - https://docs.datastax.com/en/developer/java-driver/4.16/
+  - https://docs.datastax.com/en/developer/csharp-driver/3.19/
+  - https://docs.datastax.com/en/developer/nodejs-driver/4.6/
+  - https://cassandra.apache.org/doc/latest/cassandra/cql/
+mode: "Development"
