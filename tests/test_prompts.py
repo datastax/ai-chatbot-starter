@@ -20,7 +20,7 @@ questions = [
 
 
 @pytest.mark.parametrize("persona", ["default"])
-def test_prompts(persona, init_config, astra_conn, gcp_conn):
+def test_prompts(persona, init_config):
     assistant = AssistantBison(
         config=init_config,
         max_tokens_response=1024,
