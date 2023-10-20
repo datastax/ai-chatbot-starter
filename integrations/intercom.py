@@ -137,11 +137,6 @@ class IntercomResponseDecider(IntercomIntegrationMixin, ResponseDecider):
 
         data = request_body["data"]
 
-        debugging_payload = {"request": data}
-        bugsnag.notify(
-            Exception(debugging_payload)
-        )  # TODO: Simply for temporary debugging
-
         # Handle intercom webhook tests
         if data["item"]["type"] == "ping":
             return ResponseDecision(
