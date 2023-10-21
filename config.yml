@@ -1,6 +1,9 @@
-response_decider_cls: []
-user_context_creator_cls: []
-response_actor_cls: []
+response_decider_cls:
+  - ExampleResponseDecider
+user_context_creator_cls:
+  - ExampleUserContextCreator
+response_actor_cls:
+  - ExampleResponseActor
 
 llm_provider: openai
 company: My Company
