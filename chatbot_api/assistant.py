@@ -1,5 +1,3 @@
-import os
-
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
@@ -10,35 +8,34 @@ from llama_index import VectorStoreIndex, ServiceContext
 from llama_index.vector_stores import CassandraVectorStore
 from llama_index.embeddings import LangchainEmbedding
 from llama_index.llms import OpenAI
-from vertexai.preview.language_models import TextGenerationModel
+from llama_index.response.schema import StreamingResponse
 
 from chatbot_api.prompt_util import get_template
-from integrations.astra import DEFAULT_TABLE_NAME
 from integrations.google import GECKO_EMB_DIM, init_gcp
 from integrations.openai import OPENAI_EMB_DIM
+from pipeline.config import Config, LLMProvider
 
 
 class Assistant(ABC):
     def __init__(
         self,
-        embeddings: Optional[Embeddings] = None,
-        table_name: str = DEFAULT_TABLE_NAME,
+        config: Config,
+        embeddings: Embeddings,
         k: int = 4,
         llm = None,
-        llm_provider: str = "openai"
     ):
-        # Set the embeddings, keyspace, and table name from the args/kwargs
+        self.config = config
         self.embeddings = embeddings
-        self.table_name = table_name
+        self.llm = llm
 
-        embedding_dimension = OPENAI_EMB_DIM if llm_provider == "openai" else GECKO_EMB_DIM
+        embedding_dimension = OPENAI_EMB_DIM if self.config.llm_provider == LLMProvider.OpenAI else GECKO_EMB_DIM
 
         # Initialize the vector store, which contains the vector embeddings of the data
         # NOTE: With cassio init, session & keyspace are inferred from global default
         self.vectorstore = CassandraVectorStore(
             session=None,
             keyspace=None,
-            table=table_name,
+            table=self.config.astra_db_table_name,
             embedding_dimension=embedding_dimension,
         )
 
@@ -56,7 +53,7 @@ class Assistant(ABC):
                                                        streaming=True)
 
     # Get a response from the vector search, aka the relevant data
-    def find_relevant_docs(self, query: str) -> Tuple[str, str]:
+    def find_relevant_docs(self, query: str) -> str:
         response = self.query_engine.query(
             query
         )  # TODO: Retriever (index.as_retriever (returns list of source nodes instead of response object))
@@ -96,33 +93,27 @@ class AssistantBison(Assistant):
     # Instantiate the class using the default bison model
     def __init__(
         self,
-        embeddings: Optional[Embeddings] = None,
-        table_name: str = DEFAULT_TABLE_NAME,
+        config: Config,
         temp: float = 0.2,
         max_tokens_response: int = 256,
         k: int = 4,
         company: str = "",
         custom_rules: Optional[List[str]] = None,
     ):
-        self.llm_provider = os.getenv("LLM_PROVIDER", "openai")
-        if embeddings is None:
-            if self.llm_provider == "openai":
-                embeddings = OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDINGS_MODEL", "text-embedding-ada-002"))
-            elif self.llm_provider == "google":
-                init_gcp()
-                embeddings = VertexAIEmbeddings(model_name=os.getenv("GOOGLE_EMBEDDINGS_MODEL", "textembedding-gecko@latest"))
-            else:
-                raise AssertionError("LLM Provider must be one of openai or google")
-        
-        # Choose the LLM based on the provider
-        if self.llm_provider == "openai":
-            self.llm = OpenAI(model=os.getenv("OPENAI_TEXTGEN_MODEL"))
-        elif self.llm_provider == "google":
-            self.llm = VertexAI(model_name=os.getenv("GOOGLE_TEXTGEN_MODEL"))
+        # Choose the embeddings and LLM based on the llm_provider
+        if config.llm_provider == LLMProvider.OpenAI:
+            embeddings = OpenAIEmbeddings(model=config.openai_embeddings_model)
+            llm = OpenAI(model=config.openai_textgen_model)
+
+        elif config.llm_provider == LLMProvider.Google:
+            init_gcp(config)
+            embeddings = VertexAIEmbeddings(model_name=config.google_embeddings_model)
+            llm = VertexAI(model_name=config.google_textgen_model)
+
         else:
             raise AssertionError("LLM Provider must be one of openai or google")
 
-        super().__init__(embeddings, table_name, k, self.llm, self.llm_provider)
+        super().__init__(config, embeddings, k, llm)
 
         self.parameters = {
             "temperature": temp,  # Temperature controls the degree of randomness in token selection.
@@ -138,7 +129,7 @@ class AssistantBison(Assistant):
         persona: str,
         user_context: str = "",
         include_context: bool = True,
-    ) -> Tuple[str, str, str]:
+    ) -> Tuple[StreamingResponse, str, str]:
         responses_from_vs = self.find_relevant_docs(query=user_input)
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input

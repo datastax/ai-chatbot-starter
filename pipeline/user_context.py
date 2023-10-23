@@ -1,30 +1,41 @@
 import abc
 from dataclasses import dataclass
-from typing import Any, Dict, Type
+from typing import Any
 
-from .utils import register
-
-user_context_registry: Dict[str, Type["UserContext"]] = {}
+from .base_integration import BaseIntegration, integrations_registry
+from .config import Config
 
 
 @dataclass
-class UserContext(metaclass=abc.ABCMeta):
+class UserContext:
     """
     A class to represent user context to be supplied to the LLM.
-    It should handle retrieving the necessary fields, as well as
-    formatting them appropriately into a string.
     """
 
     user_question: str
     persona: str
     context_str: str
 
-    # Register all subclasses
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        register(user_context_registry, cls)
 
-    @classmethod
+class UserContextCreator(BaseIntegration, metaclass=abc.ABCMeta):
+    """
+    A class to create the user context. It should handle retrieving the necessary
+    fields, as well as formatting them appropriately into a string.
+    """
     @abc.abstractmethod
-    def from_conversation_info(cls, conv_info: Any) -> "UserContext":
+    def create_user_context(self, conv_info: Any) -> UserContext:
         pass
+
+
+def create_all_user_context(
+    config: Config,
+    conv_info: Any,
+) -> UserContext:
+    """Runs all ResponseActors specified in config to take response actions"""
+    # TODO: Some aggregation strategy that allows for multiple user_context_creators
+    for cls_name in config.user_context_creator_cls:
+        user_context_creator = integrations_registry[cls_name](config)
+        assert isinstance(user_context_creator, UserContextCreator), f"Must only specify UserContextCreator in user_context_creator_cls"
+        return user_context_creator.create_user_context(conv_info)
+
+    raise ValueError(f"No UserContextCreator found - must specify one")

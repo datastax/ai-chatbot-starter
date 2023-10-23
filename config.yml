@@ -1,0 +1,13 @@
+response_decider_cls:
+  - ExampleResponseDecider
+user_context_creator_cls:
+  - ExampleUserContextCreator
+response_actor_cls:
+  - ExampleResponseActor
+
+llm_provider: openai
+company: My Company
+company_url: my-company-url
+custom_rules: []
+doc_pages: []
+mode: "Development"

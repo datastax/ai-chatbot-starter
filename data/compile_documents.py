@@ -12,34 +12,34 @@ from llama_index.vector_stores import CassandraVectorStore
 sys.path.append("../")
 
 from chatbot_api.compile_docs import convert_scraped_files_to_documents
-from integrations.astra import init_astra, init_astra_get_table_name
+from integrations.astra import init_astra
 from integrations.google import init_gcp, GECKO_EMB_DIM
 from integrations.openai import OPENAI_EMB_DIM
+from pipeline.config import LLMProvider, load_config
 
 dotenv_path = "../.env"
 load_dotenv(dotenv_path)
+config = load_config("../config.yml")
 
-init_astra()
-table_name = init_astra_get_table_name()
+init_astra(config)
 
 # Provider for LLM
-llm_provider = os.getenv("LLM_PROVIDER", "openai")
-if llm_provider == "openai":
+if config.llm_provider == LLMProvider.OpenAI:
     embedding_model = LangchainEmbedding(
-        OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDINGS_MODEL", "text-embedding-ada-002"))
+        OpenAIEmbeddings(model=config.openai_embeddings_model)
     )
 else:
-    init_gcp()
+    init_gcp(config)
     embedding_model = LangchainEmbedding(
-        VertexAIEmbeddings(model_name=os.getenv("GOOGLE_EMBEDDINGS_MODEL", "textembedding-gecko@latest"))
+        VertexAIEmbeddings(model_name=config.google_embeddings_model)
     )
 
-embedding_dimension = OPENAI_EMB_DIM if llm_provider == "openai" else GECKO_EMB_DIM
+embedding_dimension = OPENAI_EMB_DIM if config.llm_provider == LLMProvider.OpenAI else GECKO_EMB_DIM
 
 vectorstore = CassandraVectorStore(
     session=None,
     keyspace=None,
-    table=table_name,
+    table=config.astra_db_table_name,
     embedding_dimension=embedding_dimension,
 )
 

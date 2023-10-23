@@ -4,14 +4,12 @@ import logging
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
-import hmac
 import hashlib
+import hmac
+from llama_index.response.schema import StreamingResponse
 from pydantic.utils import deep_update
 import pytest
-
-from dotenv import load_dotenv
-
-load_dotenv(".env")
+import requests
 
 
 def get_headers(body):
@@ -36,10 +34,13 @@ def load_test_request(filename):
 
 
 @pytest.fixture(scope="module")
-def client(init_env):
-    from app import app
+def client(init_config):
+    # Patch necessary things
+    with patch("pipeline.config.load_config") as mock:
+        mock.return_value = init_config
+        from app import app
 
-    yield TestClient(app)
+        yield TestClient(app)
 
 
 @pytest.fixture(scope="function")
@@ -51,8 +52,20 @@ def standard_request():
 def mock_assistant():
     """Mocks the AssistantBison object to prevent any real LLM queries being made"""
     with patch("app.assistant") as mock_bison:
-        mock_bison.get_response = MagicMock(return_value=("Mocked response", [], []))
+        response_gen = (s for s in ["Mocked", "response"])
+        mock_bison.get_response = MagicMock(return_value=(StreamingResponse(response_gen), [], []))
         yield mock_bison
+
+
+def get_text_response(client, data, headers, assert_created=True):
+    # r = httpx.post("http://127.0.0.1:5010/chat", json=user_data, headers=headers)
+    response = client.post("/chat", json=data, headers=headers)
+
+    if assert_created:
+        assert response.status_code == requests.codes.created, f"Request failed with status code {response.status_code}: {response.text}"
+
+    # Check if the request was successful
+    return response.content.decode()
 
 
 def test_get_root_route(client):
@@ -64,10 +77,8 @@ def test_get_root_route(client):
 
 def test_standard_case(standard_request, client):
     headers = get_headers(standard_request)
-    response = client.post("/chat", json=standard_request, headers=headers)
-    assert response.status_code == 201
-    assert response.json()["ok"] == True
-    assert response.json()["message"] == "Response submitted successfully."
+    text = get_text_response(client, standard_request, headers)
+    assert len(text) > 0
 
 
 def test_broad_case(standard_request, client):
@@ -86,19 +97,14 @@ def test_broad_case(standard_request, client):
         headers = get_headers(standard_request)
 
         # Make the post request
-        response = client.post("/chat", json=standard_request, headers=headers)
+        text_response = get_text_response(client, standard_request, headers)
 
         # Log the results to a file for manual inspection
         logging.info("###")
         logging.info(line)
-        logging.info(response.json())
+        logging.info(text_response)
         logging.info("###")
         logging.info("\n")
-
-        # TODO: Expand - for now, check successful and manually inspect quality
-        assert response.status_code == 201
-        assert response.json()["ok"] == True
-        assert response.json()["message"] == "Response submitted successfully."
 
 
 def test_invalid_signature(standard_request, client):
@@ -184,12 +190,10 @@ def test_null_user_question(standard_request, client):
         "body"
     ] = "<p>How do I authenticate my python client?</p>"
     headers = get_headers(standard_request)
-    response = client.post("/chat", json=standard_request, headers=headers)
+    text_response = get_text_response(client, standard_request, headers)
 
-    assert response.status_code == 201
-    assert response.json()["ok"]
     # Assert that the response mentions how to authenticate the python client
-    assert "python" in response.json()["response"].lower()
+    assert "python" in text_response.lower()
 
 
 @pytest.mark.parametrize(
