@@ -5,6 +5,8 @@ This AI Chatbot Starter is designed to help developers find the information they
 
 It should answer customer questions about the products or services specified.
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/datastax/ai-chatbot-starter)
+
 ## Getting Started
 
 1. Make sure you have Python 3.10+ installed
