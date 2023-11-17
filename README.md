@@ -21,7 +21,7 @@ It should answer customer questions about the products or services specified.
 
 1. Ensure you're in the `ai-chatbot-starter` directory
 2. Use `uvicorn app:app --host 0.0.0.0 --port 5010 --reload` to run the app
-3. You can test an example query by running `python scripts/call_assistant.py`
+3. You can test an example query by running `python scripts/call_assistant.py "<your_query_here>"`
 
 ### Embedding documentation into a table
 
