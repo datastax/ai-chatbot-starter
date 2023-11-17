@@ -25,4 +25,4 @@ It should answer customer questions about the products or services specified.
 
 ### Embedding documentation into a table
 
-Documentation (provided as a list of web urls in the `config.yml`) can be ingested into a database using the following command `python data/compile_documents.py`.
+Documentation (provided as a list of web urls in the `config.yml`) can be ingested into a database using the following command `PYTHONPATH=. python data/compile_documents.py`.
