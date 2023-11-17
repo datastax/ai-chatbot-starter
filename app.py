@@ -14,7 +14,6 @@ from fastapi.responses import JSONResponse, StreamingResponse
 load_dotenv(".env")
 
 from chatbot_api.assistant import AssistantBison
-from integrations.astra import init_astra
 from pipeline import (
     create_all_user_context,
     make_all_response_decisions,
@@ -25,11 +24,10 @@ from pipeline.config import load_config
 # Load Config
 config = load_config()
 
-# Setup astra table name
-init_astra(config)
-
 # Configure bugsnag
-bugsnag.configure(api_key=config.bugsnag_api_key, project_root="/", release_stage=config.mode)
+bugsnag.configure(
+    api_key=config.bugsnag_api_key, project_root="/", release_stage=config.mode
+)
 
 # Set up the logging infrastructure
 logger = logging.getLogger("test.logger")

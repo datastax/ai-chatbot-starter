@@ -1,27 +1,23 @@
 # Add documents to the vectorstore, which is on the database, through an embeddings model
-import sys
-import os
-
 from dotenv import load_dotenv
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
-from llama_index import VectorStoreIndex, ServiceContext, StorageContext
+from llama_index import (
+    SimpleDirectoryReader,
+    VectorStoreIndex,
+    ServiceContext,
+    StorageContext,
+)
 from llama_index.embeddings import LangchainEmbedding
 from llama_index.node_parser import SimpleNodeParser
-from llama_index.vector_stores import CassandraVectorStore
+from llama_index.vector_stores import AstraDBVectorStore
 
-sys.path.append("../")
-
-from chatbot_api.compile_docs import convert_scraped_files_to_documents
-from integrations.astra import init_astra
 from integrations.google import init_gcp, GECKO_EMB_DIM
 from integrations.openai import OPENAI_EMB_DIM
 from pipeline.config import LLMProvider, load_config
 
-dotenv_path = "../.env"
+dotenv_path = ".env"
 load_dotenv(dotenv_path)
-config = load_config("../config.yml")
-
-init_astra(config)
+config = load_config("config.yml")
 
 # Provider for LLM
 if config.llm_provider == LLMProvider.OpenAI:
@@ -34,12 +30,14 @@ else:
         VertexAIEmbeddings(model_name=config.google_embeddings_model)
     )
 
-embedding_dimension = OPENAI_EMB_DIM if config.llm_provider == LLMProvider.OpenAI else GECKO_EMB_DIM
+embedding_dimension = (
+    OPENAI_EMB_DIM if config.llm_provider == LLMProvider.OpenAI else GECKO_EMB_DIM
+)
 
-vectorstore = CassandraVectorStore(
-    session=None,
-    keyspace=None,
-    table=config.astra_db_table_name,
+vectorstore = AstraDBVectorStore(
+    token=config.astra_db_application_token,
+    api_endpoint=config.astra_db_api_endpoint,
+    collection_name=config.astra_db_table_name,
     embedding_dimension=embedding_dimension,
 )
 
@@ -58,7 +56,7 @@ service_context = ServiceContext.from_defaults(
 
 # Perform embedding and add to vectorstore
 def add_documents(folder_path):
-    documents = convert_scraped_files_to_documents(folder_path)
+    documents = SimpleDirectoryReader(folder_path).load_data()
     VectorStoreIndex.from_documents(
         documents=documents,
         storage_context=storage_context,
@@ -67,11 +65,5 @@ def add_documents(folder_path):
     )
 
 
-def list_folders(directory):
-    return [
-        d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))
-    ]
-
-if __name__ == '__main__':
-    for folder in list_folders("."):
-        add_documents(folder)
+if __name__ == "__main__":
+    add_documents("data/docs")

@@ -5,7 +5,7 @@ from langchain.embeddings.base import Embeddings
 from langchain.embeddings import OpenAIEmbeddings, VertexAIEmbeddings
 from langchain.llms import VertexAI
 from llama_index import VectorStoreIndex, ServiceContext
-from llama_index.vector_stores import CassandraVectorStore
+from llama_index.vector_stores import AstraDBVectorStore
 from llama_index.embeddings import LangchainEmbedding
 from llama_index.llms import OpenAI
 from llama_index.response.schema import StreamingResponse
@@ -22,20 +22,23 @@ class Assistant(ABC):
         config: Config,
         embeddings: Embeddings,
         k: int = 4,
-        llm = None,
+        llm=None,
     ):
         self.config = config
         self.embeddings = embeddings
         self.llm = llm
 
-        embedding_dimension = OPENAI_EMB_DIM if self.config.llm_provider == LLMProvider.OpenAI else GECKO_EMB_DIM
+        embedding_dimension = (
+            OPENAI_EMB_DIM
+            if self.config.llm_provider == LLMProvider.OpenAI
+            else GECKO_EMB_DIM
+        )
 
         # Initialize the vector store, which contains the vector embeddings of the data
-        # NOTE: With cassio init, session & keyspace are inferred from global default
-        self.vectorstore = CassandraVectorStore(
-            session=None,
-            keyspace=None,
-            table=self.config.astra_db_table_name,
+        self.vectorstore = AstraDBVectorStore(
+            token=self.config.astra_db_application_token,
+            api_endpoint=self.config.astra_db_api_endpoint,
+            collection_name=self.config.astra_db_table_name,
             embedding_dimension=embedding_dimension,
         )
 
@@ -49,8 +52,9 @@ class Assistant(ABC):
             vector_store=self.vectorstore, service_context=self.service_context
         )
 
-        self.query_engine = self.index.as_query_engine(similarity_top_k=k,
-                                                       streaming=True)
+        self.query_engine = self.index.as_query_engine(
+            similarity_top_k=k, streaming=True
+        )
 
     # Get a response from the vector search, aka the relevant data
     def find_relevant_docs(self, query: str) -> str:

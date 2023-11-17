@@ -47,12 +47,19 @@ def call_assistant_async(chatbot_question=CHATBOT_QUESTION):
     headers = get_headers(user_data)
 
     full_result = ""
-    with httpx.stream('POST', "http://127.0.0.1:5010/chat", json=user_data, headers=headers, timeout=600) as r:
+    with httpx.stream(
+        "POST",
+        "http://127.0.0.1:5010/chat",
+        json=user_data,
+        headers=headers,
+        timeout=600,
+    ) as r:
         for chunk in r.iter_text():
             print(chunk, flush=True, end="")
             full_result += chunk
 
     return full_result
+
 
 def call_assistant_sync(chatbot_question=CHATBOT_QUESTION):
     # Set the request appropriately
@@ -72,7 +79,7 @@ def call_assistant_sync(chatbot_question=CHATBOT_QUESTION):
         return f"Request failed with status code {r.status_code}: {r.text}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     call_assistant_async(chatbot_question=sys.argv[1])
 
     # Alternatively

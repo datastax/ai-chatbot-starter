@@ -15,7 +15,7 @@ def call_assistant_async(chatbot_question=CHATBOT_QUESTION):
 
     full_result = ""
     with httpx.stream(
-        'POST',
+        "POST",
         "http://127.0.0.1:5010/chat",
         json=request_body,
         headers=headers,
@@ -42,7 +42,10 @@ def call_assistant_sync(chatbot_question=CHATBOT_QUESTION):
         return f"Request failed with status code {r.status_code}: {r.text}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        raise ValueError("Please provide a question to ask the chatbot")
+
     call_assistant_async(chatbot_question=sys.argv[1])
 
     # Alternatively

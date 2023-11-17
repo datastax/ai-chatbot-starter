@@ -11,6 +11,7 @@ class ResponseActor(BaseIntegration, metaclass=abc.ABCMeta):
     response we will produce from the endpoint. If response is None, will iterate
     until we find a valid response
     """
+
     @abc.abstractmethod
     def take_action(
         self,
@@ -27,10 +28,12 @@ def take_all_actions(
     conv_info: Any,
     text_response: str,
     responses_from_vs: str,
-    context: str
+    context: str,
 ) -> None:
     """Runs all ResponseActors specified in config to take response actions"""
     for cls_name in config.response_actor_cls:
         response_actor = integrations_registry[cls_name](config)
-        assert isinstance(response_actor, ResponseActor), f"Must only specify ResponseActor in response_actor_cls"
+        assert isinstance(
+            response_actor, ResponseActor
+        ), f"Must only specify ResponseActor in response_actor_cls"
         response_actor.take_action(conv_info, text_response, responses_from_vs, context)

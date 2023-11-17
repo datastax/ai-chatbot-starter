@@ -59,7 +59,9 @@ class IntercomIntegrationMixin(BaseIntegration):
         return res.json()
 
     def add_comment_to_intercom_conversation(
-        self, conversation_id: str, message: str,
+        self,
+        conversation_id: str,
+        message: str,
     ) -> Dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.config.intercom_token}"}
         res = requests.post(
@@ -75,7 +77,9 @@ class IntercomIntegrationMixin(BaseIntegration):
         return res.json()
 
     # Reply to an existing Intercom conversation
-    def send_intercom_message(self, conversation_id: str, message: str) -> Dict[str, Any]:
+    def send_intercom_message(
+        self, conversation_id: str, message: str
+    ) -> Dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.config.intercom_token}"}
         payload = {
             "type": "admin",
@@ -208,7 +212,8 @@ class IntercomResponseDecider(IntercomIntegrationMixin, ResponseDecider):
                 conversation_id=data["item"]["id"],
                 contact=self.get_intercom_contact_by_id(author["id"]),
                 user_question=user_question,
-                is_user=f"@{self.config.company_url}" in author["email"] and self.config.company_url != "",
+                is_user=f"@{self.config.company_url}" in author["email"]
+                and self.config.company_url != "",
                 debug_mode="[DEBUG]" in user_question,
                 source_url=data["item"]["source"]["url"],
             ),
@@ -216,10 +221,7 @@ class IntercomResponseDecider(IntercomIntegrationMixin, ResponseDecider):
 
 
 class IntercomUserContextCreator(IntercomIntegrationMixin, UserContextCreator):
-
-    def create_user_context(
-        self, conv_info: IntercomConversationInfo
-    ) -> UserContext:
+    def create_user_context(self, conv_info: IntercomConversationInfo) -> UserContext:
         # Grab needed parameters
         conversation_id = conv_info.conversation_id  # Astra User Id
 
@@ -253,7 +255,6 @@ class IntercomUserContextCreator(IntercomIntegrationMixin, UserContextCreator):
 
 
 class IntercomResponseActor(IntercomIntegrationMixin, ResponseActor):
-
     def take_action(
         self,
         conv_info: IntercomConversationInfo,

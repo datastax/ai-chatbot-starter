@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import pytest
 
-from integrations.astra import init_astra
 from integrations.google import init_gcp
 from pipeline.config import load_config
 
@@ -16,8 +15,3 @@ def init_config():
 @pytest.fixture(scope="module")
 def gcp_conn(init_config):
     init_gcp(init_config)
-
-
-@pytest.fixture(scope="module")
-def astra_conn(init_config):
-    init_astra(init_config)

@@ -16,9 +16,8 @@ SENSITIVE_FIELDS = [
     "INTERCOM_CLIENT_SECRET",
     "BUGSNAG_API_KEY",
     "SLACK_WEBHOOK_URL",
-    "ASTRA_DB_KEYSPACE",
-    "ASTRA_DB_DATABASE_ID",
-    "ASTRA_DB_TOKEN",
+    "ASTRA_DB_API_ENDPOINT",
+    "ASTRA_DB_APPLICATION_TOKEN",
     "ASTRA_DB_TABLE_NAME",
 ]
 
@@ -30,6 +29,7 @@ class LLMProvider(str, Enum):
 
 class Config(BaseModel):
     """The allowed configuration options for this application"""
+
     # Base config options
     llm_provider: LLMProvider = LLMProvider.OpenAI
     company: str
@@ -66,9 +66,8 @@ class Config(BaseModel):
     slack_webhook_url: Optional[str] = None
 
     # Credentials for Astra DB
-    astra_db_keyspace: str
-    astra_db_database_id: str
-    astra_db_token: str
+    astra_db_application_token: str
+    astra_db_api_endpoint: str
     astra_db_table_name: str = "data"
 
     @model_validator(mode="after")
@@ -76,8 +75,12 @@ class Config(BaseModel):
         if self.llm_provider == LLMProvider.OpenAI:
             assert self.openai_api_key is not None, "openai_api_key must be included"
         elif self.llm_provider == LLMProvider.Google:
-            assert self.google_credentials is not None, "google_credentials must be included"
-            assert self.google_project_id is not None, "google_project_id must be included"
+            assert (
+                self.google_credentials is not None
+            ), "google_credentials must be included"
+            assert (
+                self.google_project_id is not None
+            ), "google_project_id must be included"
         else:
             raise ValueError(f"Unrecognized llm_provider {self.llm_provider}")
 
@@ -90,11 +93,19 @@ class Config(BaseModel):
         import integrations  # noqa: needed to populate the integrations registry
         from .base_integration import integrations_registry
 
-        all_integrations = self.response_decider_cls + self.user_context_creator_cls + self.response_decider_cls
+        all_integrations = (
+            self.response_decider_cls
+            + self.user_context_creator_cls
+            + self.response_decider_cls
+        )
         for integration_cls_name in all_integrations:
-            required_fields = integrations_registry[integration_cls_name].required_fields
+            required_fields = integrations_registry[
+                integration_cls_name
+            ].required_fields
             for field in required_fields:
-                assert getattr(self, field) is not None, f"{field} must be specified for integration {integration_cls_name}"
+                assert (
+                    getattr(self, field) is not None
+                ), f"{field} must be specified for integration {integration_cls_name}"
 
         return self
 

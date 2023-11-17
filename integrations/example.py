@@ -26,9 +26,13 @@ class ExampleResponseDecider(ExampleMixin, ResponseDecider):
     """An example of deciding on a response and producing conv_info"""
 
     def make_response_decision(
-        self, request_body: Mapping[str, Any], request_headers: Mapping[str, str],
+        self,
+        request_body: Mapping[str, Any],
+        request_headers: Mapping[str, str],
     ) -> ResponseDecision:
-        assert "question" in request_body, "Include 'question' field in the POST request"
+        assert (
+            "question" in request_body
+        ), "Include 'question' field in the POST request"
         return ResponseDecision(
             should_return_early=False,
             conversation_info={"question": request_body["question"]},
@@ -49,7 +53,9 @@ class ExampleUserContextCreator(ExampleMixin, UserContextCreator):
 class ExampleResponseActor(ExampleMixin, ResponseActor):
     """An example of a response actor that takes action based on the chatbot response"""
 
-    def take_action(self, conv_info: Any, text_response: str, responses_from_vs: str, context: str) -> None:
+    def take_action(
+        self, conv_info: Any, text_response: str, responses_from_vs: str, context: str
+    ) -> None:
         print("Bot Response:")
         print(f"    Question: {conv_info['question']}")
         print(f"")

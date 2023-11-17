@@ -22,6 +22,7 @@ class ResponseDecision:
 
 class ResponseDecider(BaseIntegration, metaclass=abc.ABCMeta):
     """A class to make a response decision based on the request input"""
+
     @abc.abstractmethod
     def make_response_decision(
         self,
@@ -40,7 +41,9 @@ def make_all_response_decisions(
     # TODO: Some aggregation strategy that allows for multiple response deciders present
     for cls_name in config.response_decider_cls:
         response_actor = integrations_registry[cls_name](config)
-        assert isinstance(response_actor, ResponseDecider), f"Must only specify ResponseDecider in response_decider_cls"
+        assert isinstance(
+            response_actor, ResponseDecider
+        ), f"Must only specify ResponseDecider in response_decider_cls"
         return response_actor.make_response_decision(request_body, request_headers)
 
     # No response deciders present, so just keep going
