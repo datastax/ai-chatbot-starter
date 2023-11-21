@@ -17,12 +17,15 @@ It should answer customer questions about the products or services specified.
 5. Create a `.env` file & add the required information. Add the OpenAI Key from Step 4 as the value of `OPENAI_API_KEY`. The Astra and OpenAI env variables are required, while the others are only needed if the respective integrations are enabled.
 6. Update the `config.yml` file to the company-specific parameters required. For an example of how this can look, take a look at `example_datastax_config.yml`.
 
+### Embedding documentation into a table
+
+Documentation (provided as a list of web urls in the `config.yml`) can be ingested into your Astra DB Collection using the following two commands:
+
+1. `PYTHONPATH=. python data/scrape_site.py`.
+2. `PYTHONPATH=. python data/compile_documents.py`.
+
 ### Running the full app
 
 1. Ensure you're in the `ai-chatbot-starter` directory
 2. Use `uvicorn app:app --host 0.0.0.0 --port 5010 --reload` to run the app
 3. You can test an example query by running `python scripts/call_assistant.py "<your_query_here>"`
-
-### Embedding documentation into a table
-
-Documentation (provided as a list of web urls in the `config.yml`) can be ingested into a database using the following command `PYTHONPATH=. python data/compile_documents.py`.
