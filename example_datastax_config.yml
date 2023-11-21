@@ -1,10 +1,9 @@
 response_decider_cls:
-  - IntercomResponseDecider
+  - ExampleResponseDecider
 user_context_creator_cls:
-  - IntercomUserContextCreator
+  - ExampleUserContextCreator
 response_actor_cls:
-  - IntercomResponseActor
-  - SlackResponseActor
+  - ExampleResponseActor
 
 llm_provider: openai
 company: DataStax and Cassandra
