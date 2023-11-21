@@ -21,8 +21,8 @@ It should answer customer questions about the products or services specified.
 
 Documentation (provided as a list of web urls in the `config.yml`) can be ingested into your Astra DB Collection using the following two commands:
 
-1. `PYTHONPATH=. python data/scrape_site.py`.
-2. `PYTHONPATH=. python data/compile_documents.py`.
+1. `PYTHONPATH=. python data/scrape_site.py`
+2. `PYTHONPATH=. python data/compile_documents.py`
 
 ### Running the full app
 
