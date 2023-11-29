@@ -48,7 +48,7 @@ class Config(BaseModel):
     #       in the corresponding integrations file
     openai_api_key: Optional[str] = None
     openai_embeddings_model: str = "text-embedding-ada-002"
-    openai_textgen_model: str = "gpt-3.5-turbo"
+    openai_textgen_model: str = "gpt-4"
 
     google_credentials: Optional[str] = None
     google_project_id: Optional[str] = None

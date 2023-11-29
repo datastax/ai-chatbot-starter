@@ -25,7 +25,7 @@ class Assistant(ABC):
         llm=None,
     ):
         self.config = config
-        self.embeddings = embeddings
+        self.embedding_model = LangchainEmbedding(embeddings)
         self.llm = llm
 
         embedding_dimension = (
@@ -41,8 +41,6 @@ class Assistant(ABC):
             collection_name=self.config.astra_db_table_name,
             embedding_dimension=embedding_dimension,
         )
-
-        self.embedding_model = LangchainEmbedding(self.embeddings)
 
         self.service_context = ServiceContext.from_defaults(
             llm=llm, embed_model=self.embedding_model
@@ -138,6 +136,10 @@ class AssistantBison(Assistant):
         # Ensure that we include the prompt context assuming the parameter is provided
         context = user_input
         if include_context:
+            # If we have a special tag, include no further context from the vector DB
+            if "[NO CONTEXT]" in user_context:
+                responses_from_vs = ""
+
             context = get_template(
                 persona,
                 responses_from_vs,
