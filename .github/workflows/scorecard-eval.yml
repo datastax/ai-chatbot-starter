@@ -49,7 +49,12 @@ jobs:
       env:
         # API keys
         SCORECARD_API_KEY: ${{ secrets.SCORECARD_API_KEY }}
-        
+    
+        # Astra DB credentials
+        ASTRA_DB_API_ENDPOINT: ${{ secrets.ASTRA_DB_API_ENDPOINT }}
+        ASTRA_DB_APPLICATION_TOKEN: ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }}
+        ASTRA_DB_TABLE_NAME: ${{ secrets.ASTRA_DB_TABLE_NAME }}
+
         # Testset and Scoring Config values
         # 1. Check if there's an input from manual trigger (workflow_dispatch)
         # 2. Fallback to values sent from external sources (repository_dispatch)
