@@ -152,6 +152,6 @@ class AssistantBison(Assistant):
                 self.custom_rules,
             )
 
-        bot_response = self.chat_engine.chat(context)
+        bot_response = self.chat_engine.stream_chat(context)
 
         return bot_response, responses_from_vs, context
