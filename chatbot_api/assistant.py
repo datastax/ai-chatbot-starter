@@ -14,6 +14,7 @@ from chatbot_api.prompt_util import get_template
 from integrations.google import GECKO_EMB_DIM, init_gcp
 from integrations.openai import OPENAI_EMB_DIM
 from pipeline.config import Config, LLMProvider
+from llama_index.chat_engine import SimpleChatEngine
 
 
 class Assistant(ABC):
@@ -53,6 +54,8 @@ class Assistant(ABC):
         self.query_engine = self.index.as_query_engine(
             similarity_top_k=k, streaming=True
         )
+
+        self.chat_engine = SimpleChatEngine.from_defaults(service_context=self.service_context)
 
     # Get a response from the vector search, aka the relevant data
     def find_relevant_docs(self, query: str) -> str:
@@ -149,6 +152,6 @@ class AssistantBison(Assistant):
                 self.custom_rules,
             )
 
-        bot_response = self.query_engine.query(context)
+        bot_response = self.chat_engine.stream_chat(context)
 
         return bot_response, responses_from_vs, context
