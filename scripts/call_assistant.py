@@ -16,7 +16,7 @@ def call_assistant_async(chatbot_question=CHATBOT_QUESTION):
     full_result = ""
     with httpx.stream(
         "POST",
-        "http://127.0.0.1:5010/chat",
+        "http://127.0.0.1:5555/chat",
         json=request_body,
         headers=headers,
         timeout=600,
@@ -33,7 +33,7 @@ def call_assistant_sync(chatbot_question=CHATBOT_QUESTION):
     headers = {}
     request_body = {"question": chatbot_question}
 
-    r = httpx.post("http://127.0.0.1:5010/chat", json=request_body, headers=headers)
+    r = httpx.post("http://127.0.0.1:5555/chat", json=request_body, headers=headers)
 
     # Check if the request was successful
     if r.status_code == httpx.codes.created:
