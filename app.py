@@ -9,10 +9,6 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
-# NOTE: Load dotenv before importing any code from other files for globals
-# TODO: Probably make this unnecessary with better abstractions
-load_dotenv(".env")
-
 from chatbot_api.assistant import AssistantBison
 from pipeline import (
     create_all_user_context,
@@ -20,6 +16,10 @@ from pipeline import (
     take_all_actions,
 )
 from pipeline.config import load_config
+
+# NOTE: Load dotenv before importing any code from other files for globals
+# TODO: Probably make this unnecessary with better abstractions
+load_dotenv(".env")
 
 # Load Config
 config = load_config()

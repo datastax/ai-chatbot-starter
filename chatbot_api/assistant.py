@@ -140,7 +140,7 @@ class AssistantBison(Assistant):
         context = user_input
         if include_context:
             # If we have a special tag, include no further context from the vector DB
-            if "[NO CONTEXT]" in user_context:
+            if "[NO CONTEXT]" in user_input:
                 responses_from_vs = ""
 
             context = get_template(
