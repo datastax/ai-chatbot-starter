@@ -29,3 +29,4 @@ Documentation (provided as a list of web urls in the `config.yml`) can be ingest
 1. Ensure you're in the `ai-chatbot-starter` directory
 2. Use `uvicorn app:app --host 0.0.0.0 --port 5555 --reload` to run the app
 3. You can test an example query by running `python scripts/call_assistant.py "<your_query_here>"`
+
