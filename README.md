@@ -22,7 +22,7 @@ Documentation (provided as a list of web urls in the `config.yml`) can be ingest
 1. Obtain your OpenAI API Key from the OpenAI Settings page.
 2. Create a `config.yml` file with the values required. Here you specify both the list of pages to scrape, as well as the list of rules for your chatbot to observe. For an example of how this can look, take a look at either `config.yml.example_datastax`, or `config.yml.example_pokemon`.
 3. Create a `.env` file & add the required information. Add the OpenAI Key from Step 1 as the value of `OPENAI_API_KEY`. The Astra and OpenAI env variables are required, while the others are only needed if the respective integrations are enabled.
-4. From the root of the repository, run the following command. This will scrape the pages specified in the `config.yml` file into text files within the `output` folder of your ai-chatbot-starter` directory.
+4. From the root of the repository, run the following command. This will scrape the pages specified in the `config.yml` file into text files within the `output` folder of your `ai-chatbot-starter` directory.
 
     ```bash
     PYTHONPATH=. python data/scrape_site.py
