@@ -20,4 +20,5 @@ myvenv
 # Data
 data/docs
 output/
+config.yml
 
