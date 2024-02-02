@@ -31,7 +31,7 @@ Documentation (provided as a list of web urls in the `config.yml`) can be ingest
 5. From the root of the repository, run the following command. This will store the embeddings for the scraped text in your AstraDB instance.
 
     ```bash
-    `PYTHONPATH=. python data/compile_documents.py`
+    PYTHONPATH=. python data/compile_documents.py
     ```
 
 ### Running the ChatBot
@@ -65,7 +65,7 @@ Alternatively, you can run the app normally using the following steps:
 1. Install the requirements using the following command:
 
     ```bash
-    `pip install -r requirements.txt
+    pip install -r requirements.txt
     ```
 
 2. Run the app using the following command:
