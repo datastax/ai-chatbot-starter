@@ -15,4 +15,4 @@ for website in config.doc_pages:
     parsed_website = urlparse(website)
     basename_website = os.path.basename(parsed_website.path)
 
-    crawl_website_parallel(website, os.path.join("data", "docs", f"{basename_website}.txt"))
+    crawl_website_parallel(website, os.path.join("output", f"{basename_website}.txt"), recursive=False)

@@ -72,8 +72,12 @@ def fetch_url(url):
     return "Following page's URL link: ~~" + str(url) + "~~\n" + body.get_text()
 
 
-def crawl_website_parallel(url, output_file: str):
-    urls = get_all_website_links(url)
+def crawl_website_parallel(url, output_file: str, recursive: bool=False):
+    if recursive:
+        urls = get_all_website_links(url)
+    else:
+        urls = [url]
+
     raw_texts = []
 
     # Use ThreadPoolExecutor to parallelize the fetch_url function
@@ -83,8 +87,8 @@ def crawl_website_parallel(url, output_file: str):
     for future in tqdm.tqdm(concurrent.futures.as_completed(futures), total=len(urls)):
         try:
             data = future.result()
-        except Exception as exc:
-            print(f"An exception occurred: {exc}")
+        except Exception as _:
+            pass
         else:
             raw_texts.append(data)
 

@@ -66,4 +66,4 @@ def add_documents(folder_path):
 
 
 if __name__ == "__main__":
-    add_documents("data/docs")
+    add_documents("output")

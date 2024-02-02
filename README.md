@@ -15,7 +15,7 @@ It should answer customer questions about the products or services specified.
 3. `pip3 install -r requirements.txt` to install the required packages
 4. Obtain your OpenAI API Key from the OpenAI Settings page
 5. Create a `.env` file & add the required information. Add the OpenAI Key from Step 4 as the value of `OPENAI_API_KEY`. The Astra and OpenAI env variables are required, while the others are only needed if the respective integrations are enabled.
-6. Update the `config.yml` file to the company-specific parameters required. For an example of how this can look, take a look at `example_datastax_config.yml`.
+6. Update the `config.yml` file with the values required. Here you specify both the list of pages to scrape, as well as the list of rules for your chatbot to observe. For an example of how this can look, take a look at `example_datastax_config.yml`.
 
 ### Embedding documentation into a table
 
